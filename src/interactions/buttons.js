@@ -4,18 +4,19 @@ import { buildModal3 } from '../modals/modal3.js'
 import { buildModal4 } from '../modals/modal4.js'
 import { create, get, remove } from '../utils/sessionStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
-
-const SESSION_EXPIRED_MSG = 'セッションが切れました。最初からやり直してください。'
-
-// ユーザー表示名を取得（GuildMember のニックネーム優先、なければグローバル表示名、なければユーザー名）
-function getDisplayName(interaction) {
-  return interaction.member?.displayName ?? interaction.user.globalName ?? interaction.user.username
-}
+import { SESSION_EXPIRED_MSG, getDisplayName } from '../utils/interactionHelpers.js'
 
 export async function handleButton(interaction) {
   const { customId, user } = interaction
 
   if (customId === 'intro_start') {
+    if (get(user.id)) {
+      await interaction.reply({
+        content: '自己紹介の入力が途中です。続きから入力するか、キャンセルしてから再度お試しください。',
+        ephemeral: true,
+      })
+      return
+    }
     create(user.id)
     await interaction.showModal(buildModal1())
     return
@@ -60,8 +61,13 @@ export async function handleButton(interaction) {
       await interaction.reply({ content: '投稿先チャンネルが見つかりませんでした。', ephemeral: true })
       return
     }
-    const text = formatIntro(getDisplayName(interaction), session.data)
-    await channel.send(text)
+    try {
+      const text = formatIntro(getDisplayName(interaction), session.data)
+      await channel.send(text)
+    } catch {
+      await interaction.reply({ content: '投稿に失敗しました。Botのチャンネル権限を確認してください。', ephemeral: true })
+      return
+    }
     remove(user.id)
     await interaction.update({ content: '✅ 自己紹介を投稿しました！', components: [] })
     return

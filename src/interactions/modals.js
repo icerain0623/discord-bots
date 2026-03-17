@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js'
 import { get, update, setStep } from '../utils/sessionStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
+import { SESSION_EXPIRED_MSG, getDisplayName } from '../utils/interactionHelpers.js'
 
 function nextRow(nextButtonId) {
   return new ActionRowBuilder().addComponents(
@@ -28,11 +29,6 @@ function confirmRow() {
   )
 }
 
-// ユーザー表示名を取得（GuildMember のニックネーム優先）
-function getDisplayName(interaction) {
-  return interaction.member?.displayName ?? interaction.user.globalName ?? interaction.user.username
-}
-
 // モーダルのフィールドを取得（空文字は undefined に正規化）
 function extractFields(interaction, keys) {
   return Object.fromEntries(
@@ -47,7 +43,7 @@ export async function handleModalSubmit(interaction) {
   const { customId, user } = interaction
 
   if (!get(user.id)) {
-    await interaction.reply({ content: 'セッションが切れました。最初からやり直してください。', ephemeral: true })
+    await interaction.reply({ content: SESSION_EXPIRED_MSG, ephemeral: true })
     return
   }
 
@@ -87,6 +83,10 @@ export async function handleModalSubmit(interaction) {
   if (customId === 'intro_modal_4') {
     update(user.id, extractFields(interaction, ['pet', 'holiday', 'reply', 'game', 'oneword']))
     const session = get(user.id)
+    if (!session) {
+      await interaction.reply({ content: SESSION_EXPIRED_MSG, ephemeral: true })
+      return
+    }
     const preview = formatIntro(getDisplayName(interaction), session.data)
     await interaction.reply({
       content: `**入力完了！** 以下の内容で投稿します。\n\n${preview}`,
