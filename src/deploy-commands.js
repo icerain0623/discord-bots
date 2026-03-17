@@ -1,8 +1,13 @@
 import 'dotenv/config'
-import { REST, Routes } from 'discord.js'
-import { data as setupIntroData } from './commands/setupIntro.js'
+import { REST, Routes, SlashCommandBuilder } from 'discord.js'
 
-const commands = [setupIntroData.toJSON()]
+const commands = [
+  new SlashCommandBuilder()
+    .setName('setup-intro')
+    .setDescription('自己紹介パネルをこのチャンネルに設置します（管理者のみ）')
+    .toJSON(),
+]
+
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)
 
 await rest.put(

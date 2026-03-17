@@ -1,21 +1,34 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } from 'discord.js'
+const EPHEMERAL = 64
 
-export const data = new SlashCommandBuilder()
-  .setName('setup-intro')
-  .setDescription('自己紹介パネルをこのチャンネルに設置します（管理者のみ）')
+export async function execute(interaction, env) {
+  const row = {
+    type: 1,
+    components: [{
+      type: 2,
+      custom_id: 'intro_start',
+      label: '✏️ 自己紹介を書く',
+      style: 1,
+    }],
+  }
 
-export async function execute(interaction) {
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('intro_start')
-      .setLabel('✏️ 自己紹介を書く')
-      .setStyle(ButtonStyle.Primary),
+  const res = await fetch(
+    `https://discord.com/api/v10/channels/${interaction.channel_id}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${env.DISCORD_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: '**📝 自己紹介**\nボタンを押して自己紹介を投稿しましょう！',
+        components: [row],
+      }),
+    },
   )
 
-  await interaction.channel.send({
-    content: '**📝 自己紹介**\nボタンを押して自己紹介を投稿しましょう！',
-    components: [row],
-  })
+  if (!res.ok) {
+    return { type: 4, data: { content: 'パネルの設置に失敗しました。', flags: EPHEMERAL } }
+  }
 
-  await interaction.reply({ content: 'パネルを設置しました！', ephemeral: true })
+  return { type: 4, data: { content: 'パネルを設置しました！', flags: EPHEMERAL } }
 }
