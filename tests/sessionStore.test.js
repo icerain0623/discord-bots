@@ -1,4 +1,4 @@
-import { create, get, update, remove, clear, isExpired } from '../src/utils/sessionStore.js'
+import { create, get, update, remove, clear, isExpired, setStep } from '../src/utils/sessionStore.js'
 
 beforeEach(() => {
   clear() // テスト間の状態汚染を防ぐ
@@ -37,5 +37,6 @@ describe('sessionStore', () => {
     const session = get('user1')
     session.expiresAt = Date.now() - 1 // 期限切れに強制
     expect(isExpired('user1')).toBe(true)
+    expect(get('user1')).toBeNull()
   })
 })
