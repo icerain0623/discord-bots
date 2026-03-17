@@ -2,6 +2,7 @@ const FALLBACK = '未回答'
 const f = (val) => val?.trim() || FALLBACK
 
 export function formatIntro(username, data) {
+  data = data ?? {}
   return `
 ✨ **${username}** さんの自己紹介 ✨
 
