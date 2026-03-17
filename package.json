@@ -7,6 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "node src/deploy-commands.js",
     "publish": "wrangler deploy",
+    "lint": "eslint src/ tests/",
     "test": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "jest": {
@@ -20,6 +21,9 @@
     "dotenv": "^17.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0",
     "jest": "^30.3.0",
     "wrangler": "^4.74.0"
   }
