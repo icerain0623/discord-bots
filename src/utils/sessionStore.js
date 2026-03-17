@@ -30,6 +30,7 @@ export function setStep(userId, step) {
   const session = get(userId)
   if (!session) return
   session.step = step
+  session.expiresAt = Date.now() + TTL_MS
 }
 
 export function remove(userId) {

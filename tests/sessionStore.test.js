@@ -26,6 +26,12 @@ describe('sessionStore', () => {
     expect(get('user1').data).toEqual({ name: '花子', age: '25' })
   })
 
+  test('ステップを更新できる', () => {
+    create('user1')
+    setStep('user1', 3)
+    expect(get('user1').step).toBe(3)
+  })
+
   test('セッションを削除できる', () => {
     create('user1')
     remove('user1')
