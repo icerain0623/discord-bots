@@ -1,0 +1,11 @@
+name = "discord-bots"
+main = "src/worker.js"
+compatibility_date = "2024-09-23"
+
+# [vars] には機密でない設定のみ記述する
+# INTRO_CHANNEL_ID は機密情報のため wrangler secret put で設定する
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = ""         # npx wrangler kv namespace create SESSION_KV で取得
+preview_id = "" # npx wrangler kv namespace create SESSION_KV --preview で取得

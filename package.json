@@ -4,8 +4,9 @@
   "description": "Discord bot with multiple features",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
+    "dev": "wrangler dev",
     "deploy": "node src/deploy-commands.js",
+    "publish": "wrangler deploy",
     "test": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "jest": {
@@ -19,6 +20,7 @@
     "dotenv": "^17.3.1"
   },
   "devDependencies": {
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "wrangler": "^4.74.0"
   }
 }
