@@ -50,25 +50,19 @@ export async function handleModalSubmit(interaction, env) {
   if (!session) return ephemeralMsg(SESSION_EXPIRED_MSG)
 
   if (customId === 'intro_modal_1') {
-    await update(kv, userId, extractFields(interaction, ['name', 'gender', 'age', 'title', 'hometown']))
+    await update(kv, userId, extractFields(interaction, ['name', 'title', 'hometown']))
     await setStep(kv, userId, 2)
-    return ephemeralMsg('**ステップ 1/4 完了！** 次は趣味・特技などを入力します。', [nextRow('intro_next_2')])
+    return ephemeralMsg('**ステップ 1/3 完了！** 次は趣味・特技などを入力します。', [nextRow('intro_next_2')])
   }
 
   if (customId === 'intro_modal_2') {
     await update(kv, userId, extractFields(interaction, ['hobby', 'skill', 'myboom', 'food', 'drink']))
     await setStep(kv, userId, 3)
-    return ephemeralMsg('**ステップ 2/4 完了！** 次は好きな場所・音楽などを入力します。', [nextRow('intro_next_3')])
+    return ephemeralMsg('**ステップ 2/3 完了！** 次は好きな場所・音楽などを入力します。', [nextRow('intro_next_3')])
   }
 
   if (customId === 'intro_modal_3') {
-    await update(kv, userId, extractFields(interaction, ['place', 'oshi', 'music', 'book', 'want']))
-    await setStep(kv, userId, 4)
-    return ephemeralMsg('**ステップ 3/4 完了！** 最後の質問です。', [nextRow('intro_next_4')])
-  }
-
-  if (customId === 'intro_modal_4') {
-    await update(kv, userId, extractFields(interaction, ['pet', 'holiday', 'reply', 'game', 'oneword']))
+    await update(kv, userId, extractFields(interaction, ['place', 'oshi', 'music', 'book', 'oneword']))
     const updated = await get(kv, userId)
     if (!updated) return ephemeralMsg(SESSION_EXPIRED_MSG)
     const preview = formatIntro(getDisplayName(interaction), updated.data)

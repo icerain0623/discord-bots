@@ -8,8 +8,6 @@ export function formatIntro(username, data) {
 
 【基本】
 名前：${f(data.name)}
-性別：${f(data.gender)}
-年齢：${f(data.age)}
 肩書き：${f(data.title)}
 出身地：${f(data.hometown)}
 趣味：${f(data.hobby)}
@@ -23,13 +21,6 @@ export function formatIntro(username, data) {
 推し・キャラクター：${f(data.oshi)}
 音楽：${f(data.music)}
 本：${f(data.book)}
-
-【もっと！】
-いま欲しいもの：${f(data.want)}
-ペットを飼うなら：${f(data.pet)}
-休日はどう過ごす？：${f(data.holiday)}
-返信は早い？：${f(data.reply)}
-ゲームやってる？：${f(data.game)}
 
 【一言！】
 ${f(data.oneword)}

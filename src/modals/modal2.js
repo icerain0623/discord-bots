@@ -1,7 +1,7 @@
 export function buildModal2() {
   return {
     custom_id: 'intro_modal_2',
-    title: '自己紹介 (2/4) 【基本②＋好きな物①】',
+    title: '自己紹介 (2/3) 【基本②＋好きな物①】',
     components: [
       textRow('hobby',  '趣味',         '例：ゲーム、映画鑑賞'),
       textRow('skill',  '特技',         '例：料理、プログラミング'),
