@@ -1,7 +1,6 @@
 import { buildModal1 } from '../modals/modal1.js'
 import { buildModal2 } from '../modals/modal2.js'
 import { buildModal3 } from '../modals/modal3.js'
-import { buildModal4 } from '../modals/modal4.js'
 import { create, get, remove } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
@@ -33,11 +32,6 @@ export async function handleButton(interaction, env) {
   if (customId === 'intro_next_3') {
     if (!await get(kv, userId)) return ephemeralMsg(SESSION_EXPIRED_MSG)
     return showModal(buildModal3())
-  }
-
-  if (customId === 'intro_next_4') {
-    if (!await get(kv, userId)) return ephemeralMsg(SESSION_EXPIRED_MSG)
-    return showModal(buildModal4())
   }
 
   if (customId === 'intro_confirm') {
