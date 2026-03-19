@@ -1,5 +1,6 @@
 import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
+import { collectAndRespond as emojiStatsCollect } from './commands/emojiStats.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -11,7 +12,7 @@ const InteractionType = {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 })
     }
@@ -36,6 +37,12 @@ export default {
         interaction.data?.name === 'setup-intro'
       ) {
         result = await setupIntroExecute(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'emoji-stats'
+      ) {
+        ctx.waitUntil(emojiStatsCollect(interaction, env))
+        return Response.json({ type: 5 })
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
