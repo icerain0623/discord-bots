@@ -19,3 +19,36 @@ export function extractEmojisFromText(text) {
   }
   return counts
 }
+
+export function countReactions(reactions) {
+  const counts = {}
+  if (!reactions || reactions.length === 0) return counts
+  for (const r of reactions) {
+    const emoji = r.emoji
+    let key
+    if (emoji.id) {
+      const prefix = emoji.animated ? '<a:' : '<:'
+      key = `${prefix}${emoji.name}:${emoji.id}>`
+    } else {
+      key = emoji.name
+    }
+    counts[key] = (counts[key] || 0) + r.count
+  }
+  return counts
+}
+
+function mergeCounts(target, source) {
+  for (const [key, count] of Object.entries(source)) {
+    target[key] = (target[key] || 0) + count
+  }
+}
+
+export function countEmojis(messages) {
+  const total = {}
+  for (const msg of messages) {
+    if (msg.author?.bot) continue
+    mergeCounts(total, extractEmojisFromText(msg.content))
+    mergeCounts(total, countReactions(msg.reactions))
+  }
+  return total
+}
