@@ -23,8 +23,22 @@ export async function handleButton(interaction, env) {
   if (customId === 'intro_start') {
     const existing = await get(kv, userId)
     if (existing) {
-      return ephemeralMsg('自己紹介の入力が途中です。続きから入力するか、キャンセルしてから再度お試しください。')
+      return ephemeralMsg('自己紹介の入力が途中です。最初からやり直すか、キャンセルできます。', [
+        {
+          type: 1,
+          components: [
+            { type: 2, custom_id: 'intro_restart', label: '最初からやり直す', style: 1 },
+            { type: 2, custom_id: 'intro_cancel', label: 'キャンセル', style: 2 },
+          ],
+        },
+      ])
     }
+    await create(kv, userId)
+    return showModal(buildModal1())
+  }
+
+  if (customId === 'intro_restart') {
+    await remove(kv, userId)
     await create(kv, userId)
     return showModal(buildModal1())
   }
