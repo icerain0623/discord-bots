@@ -4,7 +4,7 @@ import { formatEmojiStats } from '../utils/formatEmojiStats.js'
 
 export async function collectAndRespond(interaction, env) {
   const guildId = interaction.guild_id
-  const applicationId = env.CLIENT_ID
+  const applicationId = interaction.application_id
   const token = env.DISCORD_TOKEN
   const interactionToken = interaction.token
 
