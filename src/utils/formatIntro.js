@@ -1,9 +1,16 @@
 const FALLBACK = '未回答'
 const f = (val) => val?.trim() || FALLBACK
 
+const MORE_KEYS = ['want', 'pet', 'brand', 'holiday', 'reply_speed', 'kinoko_takenoko', 'taiyaki']
+
+function hasMoreSection(data) {
+  return MORE_KEYS.some((k) => data[k]?.trim())
+}
+
 export function formatIntro(username, data) {
   data = data ?? {}
-  return `
+
+  let text = `\
 ✨ **${username}** さんの自己紹介 ✨
 
 【基本】
@@ -23,6 +30,20 @@ export function formatIntro(username, data) {
 本：${f(data.book)}
 
 【一言！】
-${f(data.oneword)}
-`.trim()
+${f(data.oneword)}`
+
+  if (hasMoreSection(data)) {
+    text += `
+
+【もっと！】
+いま欲しいもの：${f(data.want)}
+ペットを飼うなら：${f(data.pet)}
+好きなブランド：${f(data.brand)}
+休日はどう過ごす？：${f(data.holiday)}
+返信は早い？：${f(data.reply_speed)}
+きのこ派 or たけのこ派：${f(data.kinoko_takenoko)}
+たい焼きの食べ方：${f(data.taiyaki)}`
+  }
+
+  return text
 }

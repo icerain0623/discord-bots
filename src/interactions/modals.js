@@ -18,6 +18,17 @@ function nextRow(nextButtonId) {
   }
 }
 
+function moreRow() {
+  return {
+    type: 1,
+    components: [
+      { type: 2, custom_id: 'intro_more', label: 'もっと回答する ➕', style: 1 },
+      { type: 2, custom_id: 'intro_skip_confirm', label: '確認へ進む →', style: 3 },
+      { type: 2, custom_id: 'intro_cancel', label: 'キャンセル', style: 2 },
+    ],
+  }
+}
+
 function confirmRow() {
   return {
     type: 1,
@@ -63,6 +74,16 @@ export async function handleModalSubmit(interaction, env) {
 
   if (customId === 'intro_modal_3') {
     await update(kv, userId, extractFields(interaction, ['place', 'oshi', 'music', 'book', 'oneword']))
+    return ephemeralMsg('**ステップ 3/3 完了！** 追加の質問に回答することもできます。', [moreRow()])
+  }
+
+  if (customId === 'intro_modal_4') {
+    await update(kv, userId, extractFields(interaction, ['want', 'pet', 'brand', 'holiday']))
+    return ephemeralMsg('**もっと！① 完了！** あと少しだけ質問があります。', [nextRow('intro_next_5')])
+  }
+
+  if (customId === 'intro_modal_5') {
+    await update(kv, userId, extractFields(interaction, ['reply_speed', 'kinoko_takenoko', 'taiyaki']))
     const updated = await get(kv, userId)
     if (!updated) return ephemeralMsg(SESSION_EXPIRED_MSG)
     const preview = formatIntro(getDisplayName(interaction), updated.data)
