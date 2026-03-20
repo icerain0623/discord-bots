@@ -8,3 +8,7 @@ compatibility_date = "2024-09-23"
 [[kv_namespaces]]
 binding = "SESSION_KV"
 id = "54654535cc2140d0b9022e4be3cf2b31"
+
+[[kv_namespaces]]
+binding = "MATCHUP_KV"
+id = "923444696dc4472fb016330b9f82d439"

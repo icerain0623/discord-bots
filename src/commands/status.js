@@ -1,9 +1,10 @@
-const VERSION = '0.6.0'
+const VERSION = '0.7.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
   { name: 'emoji-stats', desc: '絵文字ランキング表示' },
   { name: 'status', desc: 'Bot ステータス表示' },
+  { name: 'matchup', desc: '交流マッチング（テスト機能）' },
 ]
 
 function formatJST(isoString) {

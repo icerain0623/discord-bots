@@ -156,3 +156,64 @@ export async function sendFollowup(applicationId, interactionToken, embed) {
     console.error(`sendFollowup failed (${res.status}):`, text)
   }
 }
+
+export async function createChannel(guildId, token, payload) {
+  const res = await discordFetch(`/guilds/${guildId}/channels`, token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    console.error(`createChannel failed (${res.status}):`, text)
+    return null
+  }
+  return res.json()
+}
+
+export async function deleteChannel(channelId, token) {
+  const res = await discordFetch(`/channels/${channelId}`, token, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    console.error(`deleteChannel failed (${res.status}):`, await res.text())
+  }
+}
+
+export async function createCategory(guildId, token, name) {
+  return createChannel(guildId, token, { name, type: 4 })
+}
+
+export async function postMessage(channelId, token, payload) {
+  const body = typeof payload === 'string' ? { content: payload } : payload
+  const res = await discordFetch(`/channels/${channelId}/messages`, token, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    console.error(`postMessage failed (${res.status}):`, await res.text())
+  }
+  return res
+}
+
+export async function editMessage(channelId, messageId, token, data) {
+  const res = await discordFetch(`/channels/${channelId}/messages/${messageId}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    console.error(`editMessage failed (${res.status}):`, await res.text())
+  }
+  return res
+}
+
+export async function sendFollowupMessage(applicationId, interactionToken, payload) {
+  const res = await discordFetch(`/webhooks/${applicationId}/${interactionToken}`, null, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    console.error(`sendFollowupMessage failed (${res.status}):`, text)
+  }
+}
