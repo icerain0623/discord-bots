@@ -7,6 +7,7 @@ function makeInteraction(period) {
         { name: '期間', value: period },
       ],
     },
+    member: { permissions: '32' },
   }
 }
 

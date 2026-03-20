@@ -21,6 +21,7 @@ export async function getContact(kv, reportId) {
 }
 
 export async function setThreadId(kv, reportId, threadId) {
+  // Re-read just before write to reduce race window
   const contact = await getContact(kv, reportId)
   if (!contact) return null
   contact.threadId = threadId
@@ -31,12 +32,19 @@ export async function setThreadId(kv, reportId, threadId) {
 }
 
 export async function addMessage(kv, reportId, from, body) {
+  // Re-read just before write to reduce race window
   const contact = await getContact(kv, reportId)
   if (!contact) return null
-  contact.messages.push({ from, body, timestamp: new Date().toISOString() })
-  contact.updatedAt = new Date().toISOString()
-  await kv.put(`contact_${reportId}`, JSON.stringify(contact), {
+  const now = new Date().toISOString()
+  const newMessage = { from, body, timestamp: now }
+
+  // Re-read to get the latest state and merge
+  const latest = await getContact(kv, reportId)
+  const base = latest || contact
+  base.messages.push(newMessage)
+  base.updatedAt = now
+  await kv.put(`contact_${reportId}`, JSON.stringify(base), {
     expirationTtl: TTL_SECONDS,
   })
-  return contact
+  return base
 }

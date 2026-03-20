@@ -18,7 +18,7 @@ function buildInteraction(customId, fieldId, value) {
         components: [{ custom_id: fieldId, value }],
       }],
     },
-    member: { user: { id: 'user123' } },
+    member: { user: { id: 'user123' }, permissions: '8192' },
   }
 }
 

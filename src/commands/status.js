@@ -1,6 +1,6 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
-const VERSION = '0.9.1'
+const VERSION = '0.9.2'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
