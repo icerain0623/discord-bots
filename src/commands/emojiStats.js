@@ -9,17 +9,10 @@ const PERIOD_MAP = {
   all: '全期間',
 }
 
-const KV_KEYS = {
-  channel: 'emoji-stats-channel',
-  forum: 'emoji-stats-forum',
-}
-
 export async function handleEmojiStats(interaction, env) {
-  const target = interaction.data.options?.find(o => o.name === '対象')?.value || 'channel'
   const period = interaction.data.options?.find(o => o.name === '期間')?.value || 'this_week'
 
-  const kvKey = KV_KEYS[target]
-  const raw = await env.SESSION_KV.get(kvKey)
+  const raw = await env.SESSION_KV.get('emoji-stats')
 
   if (!raw) {
     return {
@@ -51,12 +44,8 @@ export async function handleEmojiStats(interaction, env) {
     if (week.channelCount > maxChannels) maxChannels = week.channelCount
   }
 
-  const sourceLabel = target === 'forum'
-    ? `${maxChannels}スレッド`
-    : `${maxChannels}チャンネル`
-
   const embed = formatEmojiStats(mergedCounts, {
-    sourceLabel,
+    sourceLabel: `${maxChannels}チャンネル+スレッド`,
     messageCount: totalMessages,
     periodLabel: PERIOD_MAP[period],
     collectedAt: data.lastRun,

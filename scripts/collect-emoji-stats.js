@@ -12,6 +12,7 @@ import { getISOWeekKey } from '../src/utils/weekUtils.js'
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN
 const GUILD_ID = process.env.GUILD_ID
+const KV_KEY = 'emoji-stats'
 
 if (!DISCORD_TOKEN || !GUILD_ID) {
   console.error('DISCORD_TOKEN と GUILD_ID を .env に設定してください')
@@ -32,7 +33,7 @@ const KV_NAMESPACE_ID = getKvNamespaceId()
 function kvGet(key) {
   try {
     const result = execSync(
-      `npx wrangler kv:key get "${key}" --namespace-id="${KV_NAMESPACE_ID}"`,
+      `npx wrangler kv key get "${key}" --namespace-id="${KV_NAMESPACE_ID}" --remote`,
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     )
     return JSON.parse(result)
@@ -47,7 +48,7 @@ function kvPut(key, value) {
   writeFileSync(tmpFile, JSON.stringify(value))
   try {
     execSync(
-      `npx wrangler kv:key put "${key}" --namespace-id="${KV_NAMESPACE_ID}" --path="${tmpFile}"`,
+      `npx wrangler kv key put "${key}" --namespace-id="${KV_NAMESPACE_ID}" --path="${tmpFile}" --remote`,
       { stdio: 'inherit' }
     )
   } finally {
@@ -100,7 +101,6 @@ function timestampToSnowflake(isoTimestamp) {
 
 // チャンネル/スレッドリストから全メッセージを取得
 async function fetchMessages(sources, lastRun) {
-  // lastRun（ISO タイムスタンプ）を Snowflake に変換して全チャンネル共通で使用
   const afterId = lastRun ? timestampToSnowflake(lastRun) : null
   const allMessages = []
   for (let i = 0; i < sources.length; i++) {
@@ -112,45 +112,45 @@ async function fetchMessages(sources, lastRun) {
   return allMessages
 }
 
-async function collectForTarget(target) {
-  const kvKey = `emoji-stats-${target}`
-  const existing = kvGet(kvKey)
-  const lastRun = existing?.lastRun || null
+// メイン実行
+console.log('絵文字統計の収集を開始します...')
 
-  console.log(`\n=== ${target} ===`)
-  console.log(lastRun ? `前回の続きから取得 (since: ${lastRun})` : '初回: 全メッセージを取得')
+const existing = kvGet(KV_KEY)
+const lastRun = existing?.lastRun || null
 
-  let sources
-  if (target === 'channel') {
-    sources = await getTextChannels(GUILD_ID, DISCORD_TOKEN)
-    console.log(`テキストチャンネル: ${sources.length}件`)
-  } else {
-    const forumChannels = await getForumChannels(GUILD_ID, DISCORD_TOKEN)
-    sources = await getForumThreads(GUILD_ID, forumChannels, DISCORD_TOKEN)
-    console.log(`フォーラムスレッド: ${sources.length}件`)
-  }
+console.log(lastRun ? `前回の続きから取得 (since: ${lastRun})` : '初回: 全メッセージを取得')
 
-  const messages = await fetchMessages(sources, lastRun)
-  console.log(`取得メッセージ: ${messages.length}件`)
+// テキストチャンネル
+const textChannels = await getTextChannels(GUILD_ID, DISCORD_TOKEN)
+console.log(`\nテキストチャンネル: ${textChannels.length}件`)
+const channelMessages = await fetchMessages(textChannels, lastRun)
+console.log(`取得メッセージ: ${channelMessages.length}件`)
 
-  if (messages.length === 0 && existing) {
-    console.log('新しいメッセージはありません')
-    return
-  }
+// フォーラムスレッド
+const forumChannels = await getForumChannels(GUILD_ID, DISCORD_TOKEN)
+const forumThreads = await getForumThreads(GUILD_ID, forumChannels, DISCORD_TOKEN)
+console.log(`\nフォーラムスレッド: ${forumThreads.length}件`)
+const forumMessages = await fetchMessages(forumThreads, lastRun)
+console.log(`取得メッセージ: ${forumMessages.length}件`)
 
-  const newWeekData = countByWeek(messages)
-  const channelCount = sources.length
+// 合算
+const allMessages = [...channelMessages, ...forumMessages]
+console.log(`\n合計メッセージ: ${allMessages.length}件`)
 
-  // channelCount を各週に設定
+if (allMessages.length === 0 && existing) {
+  console.log('新しいメッセージはありません')
+} else {
+  const newWeekData = countByWeek(allMessages)
+  const sourceCount = textChannels.length + forumThreads.length
+
   for (const data of Object.values(newWeekData)) {
-    data.channelCount = channelCount
+    data.channelCount = sourceCount
   }
 
   const mergedWeeks = mergeWeekData(existing?.weeks || {}, newWeekData)
 
-  // channelCount を既存週にも更新（最新のチャンネル数を反映）
   for (const data of Object.values(mergedWeeks)) {
-    data.channelCount = channelCount
+    data.channelCount = sourceCount
   }
 
   const kvData = {
@@ -158,12 +158,8 @@ async function collectForTarget(target) {
     lastRun: new Date().toISOString(),
   }
 
-  kvPut(kvKey, kvData)
-  console.log(`KV に書き込み完了: ${kvKey}`)
+  kvPut(KV_KEY, kvData)
+  console.log(`KV に書き込み完了: ${KV_KEY}`)
 }
 
-// メイン実行
-console.log('絵文字統計の収集を開始します...')
-await collectForTarget('channel')
-await collectForTarget('forum')
 console.log('\n完了!')

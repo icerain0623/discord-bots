@@ -11,16 +11,6 @@ const commands = [
     .setDescription('絵文字ランキングを表示します')
     .addStringOption(option =>
       option
-        .setName('対象')
-        .setDescription('集計対象を選択')
-        .setRequired(true)
-        .addChoices(
-          { name: 'テキストチャンネル', value: 'channel' },
-          { name: 'フォーラム', value: 'forum' },
-        )
-    )
-    .addStringOption(option =>
-      option
         .setName('期間')
         .setDescription('集計期間を選択')
         .setRequired(true)

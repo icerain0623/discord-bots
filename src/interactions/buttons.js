@@ -19,6 +19,7 @@ export async function handleButton(interaction, env) {
   const kv = env.SESSION_KV
   const userId = getUserId(interaction)
   const customId = interaction.data.custom_id
+  console.log(`[button] customId=${customId} userId=${userId}`)
 
   if (customId === 'intro_start') {
     const existing = await get(kv, userId)
@@ -38,8 +39,8 @@ export async function handleButton(interaction, env) {
   }
 
   if (customId === 'intro_restart') {
-    await remove(kv, userId)
-    await create(kv, userId)
+    await create(kv, userId)          // 上書きで十分（remove 不要）
+    console.log(`[button] intro_restart: session recreated, showing modal`)
     return showModal(buildModal1())
   }
 
@@ -56,7 +57,7 @@ export async function handleButton(interaction, env) {
   if (customId === 'intro_skip_confirm') {
     const session = await get(kv, userId)
     if (!session) return ephemeralMsg(SESSION_EXPIRED_MSG)
-    const preview = formatIntro(getDisplayName(interaction), session.data)
+    const preview = formatIntro(getDisplayName(interaction), userId, session.data)
     return ephemeralMsg(`**入力完了！** 以下の内容で投稿します。\n\n${preview}`, [
       {
         type: 1,
@@ -82,7 +83,7 @@ export async function handleButton(interaction, env) {
     const session = await get(kv, userId)
     if (!session) return ephemeralMsg(SESSION_EXPIRED_MSG)
 
-    const text = formatIntro(getDisplayName(interaction), session.data)
+    const text = formatIntro(getDisplayName(interaction), userId, session.data)
     const res = await fetch(
       `https://discord.com/api/v10/channels/${env.INTRO_CHANNEL_ID}/messages`,
       {
@@ -105,6 +106,7 @@ export async function handleButton(interaction, env) {
 
   if (customId === 'intro_cancel') {
     await remove(kv, userId)
+    console.log(`[button] intro_cancel: session removed`)
     return updateMsg('キャンセルしました。')
   }
 

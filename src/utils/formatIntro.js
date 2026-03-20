@@ -7,11 +7,12 @@ function hasMoreSection(data) {
   return MORE_KEYS.some((k) => data[k]?.trim())
 }
 
-export function formatIntro(username, data) {
+export function formatIntro(username, userId, data) {
   data = data ?? {}
 
+  const mention = userId ? `<@${userId}>` : `**${username}**`
   let text = `\
-✨ **${username}** さんの自己紹介 ✨
+✨ ${mention} さんの自己紹介 ✨
 
 【基本】
 名前：${f(data.name)}
