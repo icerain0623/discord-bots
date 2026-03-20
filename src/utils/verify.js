@@ -14,6 +14,10 @@ export async function verifyDiscordRequest(request, body, publicKey) {
   const timestamp = request.headers.get('X-Signature-Timestamp')
   if (!signature || !timestamp) return false
 
+  // Reject requests older than 5 minutes to prevent replay attacks
+  const requestTime = parseInt(timestamp, 10) * 1000
+  if (isNaN(requestTime) || Math.abs(Date.now() - requestTime) > 5 * 60 * 1000) return false
+
   const sigBytes = hexToBytes(signature)
   const keyBytes = hexToBytes(publicKey)
   if (!sigBytes || !keyBytes) return false

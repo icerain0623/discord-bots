@@ -17,6 +17,7 @@ function makeStartInteraction(groupSize, categoryId) {
     application_id: 'app123',
     token: 'interaction-token',
     channel_id: 'ch123',
+    member: { permissions: '32' },
     data: {
       name: 'matchup',
       options: [{ name: 'start', type: 1, options }],

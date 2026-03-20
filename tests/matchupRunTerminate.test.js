@@ -14,6 +14,7 @@ function makeRunInteraction() {
     guild_id: 'g123',
     application_id: 'app123',
     token: 'tok',
+    member: { permissions: '32' },
     data: {
       name: 'matchup',
       options: [{ name: 'run', type: 1, options: [] }],
@@ -26,6 +27,7 @@ function makeTerminateInteraction() {
     guild_id: 'g123',
     application_id: 'app123',
     token: 'tok',
+    member: { permissions: '32' },
     data: {
       name: 'matchup',
       options: [{ name: 'terminate', type: 1, options: [] }],

@@ -13,6 +13,7 @@ function makeInteraction(subgroup, subcommand, options = {}) {
   const optionEntries = Object.entries(options).map(([name, value]) => ({ name, value }))
   return {
     guild_id: 'g123',
+    member: { permissions: '32' },
     data: {
       name: 'matchup',
       options: [{

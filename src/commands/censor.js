@@ -131,7 +131,7 @@ export async function handleCensor(interaction, env) {
   )
 
   if (!webhookRes.ok) {
-    console.error('[censor] Webhook creation failed:', webhookRes.status, await webhookRes.text())
+    console.error('[censor] Webhook creation failed:', webhookRes.status)
     await postMessage(channelId, token, {
       content: `**${message.author.global_name || message.author.username}**: ██████████ [検閲済み]`,
     })
@@ -155,7 +155,7 @@ export async function handleCensor(interaction, env) {
   })
 
   if (!sendRes.ok) {
-    console.error('[censor] Webhook send failed:', sendRes.status, await sendRes.text())
+    console.error('[censor] Webhook send failed:', sendRes.status)
     await postMessage(channelId, token, {
       content: `**${message.author.global_name || message.author.username}**: ██████████ [検閲済み]`,
     })
