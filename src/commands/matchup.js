@@ -159,11 +159,122 @@ async function doStart(kv, guildId, groupSize, categoryId, channelId, applicatio
 }
 
 async function handleRun(kv, guildId, interaction, env, ctx) {
-  // Stub — implemented in Task 8
-  return ephemeralMsg('（未実装）')
+  const active = await getActive(kv, guildId)
+
+  if (!active) {
+    return ephemeralMsg('アクティブなマッチングイベントがありません。')
+  }
+
+  if (active.status === 'matched') {
+    return ephemeralMsg('既にマッチング済みです。')
+  }
+
+  if (active.participants.length < 2) {
+    return ephemeralMsg(`参加者が${active.participants.length}人です。最低2人必要です。`)
+  }
+
+  if (ctx) {
+    ctx.waitUntil(doRun(kv, guildId, active, interaction, env))
+  }
+  return { type: 5, data: { flags: EPHEMERAL } }
+}
+
+async function doRun(kv, guildId, active, interaction, env) {
+  const { shuffleAndGroup, findCommonTopics } = await import('../utils/matchupLogic.js')
+  const { buildChannelPayload, buildGreetingMessage } = await import('../utils/matchupChannelUtils.js')
+  const { createChannel, postMessage, editMessage, sendFollowupMessage, createCategory } = await import('../utils/discordApi.js')
+
+  const applicationId = interaction.application_id
+  const interactionToken = interaction.token
+  const botId = applicationId
+
+  let categoryId = active.categoryId
+  if (!categoryId) {
+    const cat = await createCategory(guildId, env.DISCORD_TOKEN, '🎲 Matchup')
+    if (cat) categoryId = cat.id
+  }
+
+  const groups = shuffleAndGroup(active.participants, active.groupSize)
+  const createdChannels = []
+
+  for (let i = 0; i < groups.length; i++) {
+    const group = groups[i]
+    const memberIds = group.map(p => p.userId)
+    const payload = buildChannelPayload({
+      name: `matchup-${i + 1}`,
+      categoryId,
+      guildId,
+      memberIds,
+      botId,
+    })
+
+    const channel = await createChannel(guildId, env.DISCORD_TOKEN, payload)
+    if (!channel) continue
+
+    createdChannels.push(channel.id)
+
+    const commonTopics = findCommonTopics(group)
+    const greeting = buildGreetingMessage(group, commonTopics)
+    await postMessage(channel.id, env.DISCORD_TOKEN, greeting)
+  }
+
+  active.status = 'matched'
+  active.createdChannels = createdChannels
+  active.categoryId = categoryId
+  await setActive(kv, guildId, active)
+
+  await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
+    embeds: [{
+      title: '🎲 マッチング完了！',
+      description: `${createdChannels.length}グループが作成されました。`,
+      color: 0x57f287,
+    }],
+    components: [],
+  })
+
+  await sendFollowupMessage(applicationId, interactionToken, {
+    embeds: [{ title: '✅ マッチング完了', description: `${createdChannels.length}個のチャンネルを作成しました。`, color: 0x57f287 }],
+    flags: 64,
+  })
 }
 
 async function handleTerminate(kv, guildId, interaction, env, ctx) {
-  // Stub — implemented in Task 9
-  return ephemeralMsg('（未実装）')
+  const active = await getActive(kv, guildId)
+
+  if (!active) {
+    return ephemeralMsg('アクティブなマッチングイベントがありません。')
+  }
+
+  if (ctx) {
+    ctx.waitUntil(doTerminate(kv, guildId, active, interaction, env))
+  }
+  return { type: 5, data: { flags: EPHEMERAL } }
+}
+
+async function doTerminate(kv, guildId, active, interaction, env) {
+  const { deleteChannel, editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
+  const applicationId = interaction.application_id
+  const interactionToken = interaction.token
+
+  if (active.status === 'matched' && active.createdChannels?.length > 0) {
+    for (const channelId of active.createdChannels) {
+      await deleteChannel(channelId, env.DISCORD_TOKEN)
+    }
+  }
+
+  await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
+    embeds: [{
+      title: '🎲 このマッチングイベントは終了しました。',
+      color: 0x95a5a6,
+    }],
+    components: [],
+  })
+
+  await deleteActive(kv, guildId)
+
+  const action = active.status === 'matched' ? 'チャンネルを削除し、' : ''
+  await sendFollowupMessage(applicationId, interactionToken, {
+    embeds: [{ title: '✅ 終了', description: `${action}マッチングイベントを終了しました。`, color: 0x57f287 }],
+    flags: 64,
+  })
 }
