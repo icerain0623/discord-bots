@@ -46,17 +46,19 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 
 ### 1. ローカル集計スクリプト (`scripts/collect-emoji-stats.js`)
 
-- `.env` から `DISCORD_TOKEN`, `GUILD_ID` を読み込む
-- 既存の `discordApi.js`, `emojiCounter.js` のロジックを再利用
-- テキストチャンネルとフォーラムの両方を集計
-- チャンネル数・スレッド数・ページ数の上限なし（ローカル実行なので時間制限なし）
-- `wrangler kv:key put` で `SESSION_KV` に 2 つのキーを書き込み
-- `npm run collect` で実行
+- `dotenv/config` で `.env` から `DISCORD_TOKEN`, `GUILD_ID` を読み込む
+- 既存の `discordApi.js`, `emojiCounter.js` の関数を直接 import して再利用
+- 集計期間: 過去 7 日間（`getAllMessages` の既存ロジックを使用）
+- チャンネル数・スレッド数の上限なし、ページ数上限を撤廃（ローカル実行なので時間制限なし）
+- `child_process.execSync` で `npx wrangler kv:key put --namespace-id <KV_ID>` を実行して KV に書き込み
+- `npm run collect` (`"collect": "node scripts/collect-emoji-stats.js"`) で実行
+- 前提: `wrangler login` 済みであること（Cloudflare API トークン不要）
 
 ### 2. Worker 側 (`src/commands/emojiStats.js`)
 
-- Discord API への集計処理を削除
+- Discord API への集計処理を削除（`discordApi.js` の集計系関数は Worker からは呼ばなくなる）
 - `env.SESSION_KV.get()` で KV から読み取り
+- KV が `null` の場合（未集計時）は「まだ集計データがありません」のメッセージを返す
 - KV 読み取りは高速なので deferred response（type: 5）→ 即時レスポンス（type: 4）に変更
 
 ### 3. コマンドインターフェース
@@ -68,10 +70,10 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 
 ### 4. フッター表示
 
-`collectedAt` を表示して、いつ時点のデータかわかるようにする。
+`collectedAt` を JST で表示して、いつ時点のデータかわかるようにする。
 
 ```
-集計対象: 20チャンネル / 1,234メッセージ（集計日時: 2026/03/20 19:00）
+集計対象: 20チャンネル / 1,234メッセージ（集計日時: 2026/03/20 19:00 JST）
 ```
 
 ## 変更ファイル一覧
@@ -79,11 +81,11 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 | ファイル | 変更 |
 |---------|------|
 | `scripts/collect-emoji-stats.js` | 新規: ローカル集計スクリプト |
-| `src/commands/emojiStats.js` | KV 読み取りに書き換え |
-| `src/worker.js` | deferred → 即時レスポンスに変更 |
-| `src/utils/formatEmojiStats.js` | フッターに集計日時追加 |
-| `src/utils/discordApi.js` | MAX_CHANNELS 制限・MAX_PAGES_PER_CHANNEL 制限を撤廃 |
-| `package.json` | `collect` スクリプト追加 |
+| `src/commands/emojiStats.js` | KV 読み取りに書き換え。Discord API 集計を削除 |
+| `src/worker.js` | deferred → 即時レスポンスに変更、`ctx.waitUntil` 削除 |
+| `src/utils/formatEmojiStats.js` | フッターに集計日時（JST）追加 |
+| `src/utils/discordApi.js` | `MAX_CHANNELS`, `MAX_PAGES_PER_CHANNEL` 制限を撤廃（Worker からは集計系関数を呼ばなくなるため）。`sendFollowup` は他コマンドでは未使用だが、エラーハンドリング用に残置 |
+| `package.json` | `"collect": "node scripts/collect-emoji-stats.js"` 追加 |
 
 ## テスト方針
 
