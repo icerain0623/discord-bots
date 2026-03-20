@@ -1,55 +1,7 @@
 # Contributing to discord-bots
 
-Thank you for your interest in contributing! This project is a Discord bot running on Cloudflare Workers with discord.js v14. Contributions are welcome via the standard GitHub flow.
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) 20+
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (installed as a dev dependency via `npm install`)
-- A Cloudflare account with Workers enabled
-- A Discord bot token and a test Discord server for manual testing
-
-## Environment Setup
-
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Configure secrets
-
-Set the required secrets via Wrangler:
-
-```bash
-wrangler secret put DISCORD_TOKEN
-wrangler secret put DISCORD_PUBLIC_KEY
-wrangler secret put CLIENT_ID
-wrangler secret put GUILD_ID
-wrangler secret put INTRO_CHANNEL_ID
-```
-
-> `INTRO_CHANNEL_ID` is the channel where self-introduction posts are sent.
-
-### 3. KV namespace
-
-Session data is stored in a Cloudflare KV namespace bound as `SESSION_KV`. The binding is already configured in `wrangler.toml`. For local development, Wrangler automatically provides a local KV instance.
-
-### 4. Local development
-
-```bash
-npm run dev
-```
-
-This runs the worker locally via `wrangler dev`.
-
-### 5. Register slash commands
-
-```bash
-npm run deploy
-```
-
-This registers slash commands with Discord via `src/deploy-commands.js`. Run this once after adding or changing commands.
+このプロジェクトへの貢献に興味を持ってくださりありがとうございます！
+コードが書けなくても、アイデアの提案だけでも大歓迎です。
 
 ---
 
@@ -93,7 +45,62 @@ This registers slash commands with Discord via `src/deploy-commands.js`. Run thi
 
 ---
 
-## Contribution Workflow
+## 開発者向け: コードで貢献する
+
+ここから先は、コードを書いて貢献したい方向けのガイドです。
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (installed as a dev dependency via `npm install`)
+- A Cloudflare account with Workers enabled
+- A Discord bot token and a test Discord server for manual testing
+
+### Environment Setup
+
+#### 1. Install dependencies
+
+```bash
+npm install
+```
+
+#### 2. Configure secrets
+
+Set the required secrets via Wrangler:
+
+```bash
+wrangler secret put DISCORD_TOKEN
+wrangler secret put DISCORD_PUBLIC_KEY
+wrangler secret put CLIENT_ID
+wrangler secret put GUILD_ID
+wrangler secret put INTRO_CHANNEL_ID
+```
+
+> `INTRO_CHANNEL_ID` is the channel where self-introduction posts are sent.
+
+#### 3. KV namespace
+
+Session data is stored in a Cloudflare KV namespace bound as `SESSION_KV`. The binding is already configured in `wrangler.toml`. For local development, Wrangler automatically provides a local KV instance.
+
+#### 4. Local development
+
+```bash
+npm run dev
+```
+
+This runs the worker locally via `wrangler dev`.
+
+#### 5. Register slash commands
+
+```bash
+npm run deploy
+```
+
+This registers slash commands with Discord via `src/deploy-commands.js`. Run this once after adding or changing commands.
+
+---
+
+### Contribution Workflow
 
 1. **Fork** the repository and clone your fork locally
 2. **Create a feature branch**
@@ -120,7 +127,7 @@ This registers slash commands with Discord via `src/deploy-commands.js`. Run thi
 
 ---
 
-## Code Style & Conventions
+### Code Style & Conventions
 
 - Use ESM (`import`/`export`) throughout — do not use `require()`
 - New **commands** go in `src/commands/`
@@ -132,7 +139,7 @@ This registers slash commands with Discord via `src/deploy-commands.js`. Run thi
 
 ---
 
-## Testing
+### Testing
 
 - Unit tests are required for any new utility added under `src/utils/`
 - Test files live flat in `tests/` and are named `<module>.test.js`
@@ -143,7 +150,7 @@ This registers slash commands with Discord via `src/deploy-commands.js`. Run thi
 
 ---
 
-## Adding a New Bot Feature
+### Adding a New Bot Feature
 
 Use this checklist when adding a new feature:
 
@@ -156,7 +163,7 @@ Use this checklist when adding a new feature:
 
 ---
 
-## Deploying
+### Deploying
 
 > Only maintainers deploy to production.
 
