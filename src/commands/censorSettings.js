@@ -1,3 +1,5 @@
+import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
+
 const MODE_LABELS = {
   all: '全メッセージ対象',
   self: '自分のメッセージのみ',
@@ -5,6 +7,10 @@ const MODE_LABELS = {
 }
 
 export async function handleCensorSettings(interaction, env) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
   const mode = interaction.data.options.find(o => o.name === 'mode')?.value
   const guildId = interaction.guild_id
 

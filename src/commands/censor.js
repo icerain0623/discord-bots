@@ -1,4 +1,5 @@
 import { sendFollowupMessage, postMessage } from '../utils/discordApi.js'
+import { hasManageMessages } from '../utils/permissions.js'
 
 const API_BASE = 'https://discord.com/api/v10'
 
@@ -47,8 +48,6 @@ function getAvatarUrl(author) {
   return `https://cdn.discordapp.com/avatars/${author.id}/${author.avatar}.png`
 }
 
-// ManageMessages permission bit
-const MANAGE_MESSAGES = 1n << 13n
 
 export async function handleCensor(interaction, env) {
   const targetId = interaction.data.target_id
@@ -57,8 +56,7 @@ export async function handleCensor(interaction, env) {
   const token = env.DISCORD_TOKEN
 
   // Verify the member actually has ManageMessages permission
-  const memberPerms = BigInt(interaction.member?.permissions || '0')
-  if (!(memberPerms & MANAGE_MESSAGES)) {
+  if (!hasManageMessages(interaction)) {
     await sendFollowupMessage(interaction.application_id, interaction.token, {
       content: 'この操作には「メッセージの管理」権限が必要です。',
       flags: 64,

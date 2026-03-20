@@ -1,6 +1,12 @@
+import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
+
 const EPHEMERAL = 64
 
 export async function execute(interaction, env) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
   const row = {
     type: 1,
     components: [{

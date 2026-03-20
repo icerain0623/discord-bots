@@ -5,6 +5,7 @@ const commands = [
   new SlashCommandBuilder()
     .setName('setup-intro')
     .setDescription('自己紹介パネルをこのチャンネルに設置します（管理者のみ）')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
   new SlashCommandBuilder()
     .setName('emoji-stats')

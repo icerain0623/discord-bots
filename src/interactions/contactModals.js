@@ -1,6 +1,7 @@
 import { createContact, getContact, addMessage, setThreadId } from '../utils/contactStore.js'
 import { generateReportId } from '../utils/reportId.js'
 import { getUserId, getDisplayName } from '../utils/interactionHelpers.js'
+import { hasManageMessages, permissionDeniedResponse } from '../utils/permissions.js'
 
 const EPHEMERAL = 64
 
@@ -114,6 +115,10 @@ async function handleInitialContact(interaction, env) {
 }
 
 async function handleModeratorReply(interaction, env, reportId) {
+  if (!hasManageMessages(interaction)) {
+    return permissionDeniedResponse('メッセージの管理')
+  }
+
   const kv = env.SESSION_KV
   const body = extractBody(interaction, 'contact_reply_body')
 

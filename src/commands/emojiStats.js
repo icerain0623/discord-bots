@@ -1,5 +1,6 @@
 import { formatEmojiStats } from '../utils/formatEmojiStats.js'
 import { getWeekKeysForPeriod } from '../utils/weekUtils.js'
+import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
 const PERIOD_MAP = {
   this_week: '今週',
@@ -10,6 +11,10 @@ const PERIOD_MAP = {
 }
 
 export async function handleEmojiStats(interaction, env) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
   const period = interaction.data.options?.find(o => o.name === '期間')?.value || 'this_week'
 
   const raw = await env.SESSION_KV.get('emoji-stats')

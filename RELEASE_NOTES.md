@@ -1,5 +1,22 @@
 # Release Notes
 
+## v0.9.1 — 権限チェック強化
+
+> 2026-03-21 | [PR #10](https://github.com/icerain0623/discord-bots/pull/10)
+
+### 修正
+
+- `/setup-intro` に Discord 側の権限設定（`setDefaultMemberPermissions`）が未設定だった問題を修正
+- 全 ManageGuild コマンドにサーバーサイドのランタイム権限チェックを追加（防御の多層化）
+- Contact モデレータ返信（ボタン・モーダル）に ManageMessages 権限チェックを追加
+
+### リファクタリング
+
+- 共通権限チェックユーティリティ（`src/utils/permissions.js`）を作成し、全コマンドで再利用
+- 検閲コマンドのインライン権限チェックを共通ユーティリティに移行
+
+---
+
 ## v0.9.0 — 検閲コマンド（ジョーク機能）
 
 > 2026-03-21

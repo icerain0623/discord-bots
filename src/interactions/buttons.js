@@ -7,6 +7,7 @@ import { buildReplyModal, buildFollowupModal } from '../modals/contactModal.js'
 import { create, get, remove } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
+import { hasManageMessages, permissionDeniedResponse } from '../utils/permissions.js'
 
 const EPHEMERAL = 64
 const ephemeralMsg = (content, components) => ({
@@ -254,6 +255,9 @@ export async function handleButton(interaction, env) {
   }
 
   if (customId.startsWith('contact_reply_')) {
+    if (!hasManageMessages(interaction)) {
+      return permissionDeniedResponse('メッセージの管理')
+    }
     const reportId = customId.replace('contact_reply_', '')
     return showModal(buildReplyModal(reportId))
   }

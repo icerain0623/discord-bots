@@ -2,6 +2,7 @@ import {
   getTopics, addTopic, removeTopic,
   getActive, setActive, deleteActive,
 } from '../utils/matchupKvStore.js'
+import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
 const EPHEMERAL = 64
 
@@ -36,6 +37,10 @@ function getSubcommand(interaction) {
 }
 
 export async function handleMatchup(interaction, env, ctx) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
   const kv = env.MATCHUP_KV
   const guildId = interaction.guild_id
   const { group, sub, options } = getSubcommand(interaction)
