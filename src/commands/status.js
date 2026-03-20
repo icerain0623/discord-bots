@@ -1,4 +1,4 @@
-const VERSION = '0.7.0'
+const VERSION = '0.8.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
