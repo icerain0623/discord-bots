@@ -170,6 +170,38 @@ async function handleModeratorReply(interaction, env, reportId) {
     }
   }
 
+  // モデレーターチャンネルにも返信内容を投稿（他のモデレーターが対応状況を把握できるように）
+  const modNotify = {
+    embeds: [{
+      title: '📬 モデレーターが返信しました',
+      description: body,
+      fields: [{ name: 'レポートID', value: reportId, inline: true }],
+      color: 0x57f287,
+      timestamp: new Date().toISOString(),
+    }],
+    components: [{
+      type: 1,
+      components: [{
+        type: 2,
+        custom_id: `contact_reply_${reportId}`,
+        label: '返信する',
+        style: 1,
+      }],
+    }],
+  }
+
+  await fetch(
+    `https://discord.com/api/v10/channels/${env.CONTACT_CHANNEL_ID}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${env.DISCORD_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(modNotify),
+    },
+  )
+
   return {
     type: 4,
     data: { content: '✅ 返信を送信しました。', flags: EPHEMERAL },
