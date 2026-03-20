@@ -89,8 +89,73 @@ async function handleTopics(kv, guildId, sub, options) {
 }
 
 async function handleStart(kv, guildId, options, interaction, env, ctx) {
-  // Stub — implemented in Task 6
-  return ephemeralMsg('（未実装）')
+  const existing = await getActive(kv, guildId)
+  if (existing) {
+    return ephemeralMsg('既にアクティブなマッチングイベントがあります。先に `/matchup terminate` で終了してください。')
+  }
+
+  const groupSize = options.group_size
+  const categoryId = options.category || null
+  const channelId = interaction.channel_id
+  const applicationId = interaction.application_id
+  const interactionToken = interaction.token
+
+  if (ctx) {
+    ctx.waitUntil(doStart(kv, guildId, groupSize, categoryId, channelId, applicationId, interactionToken, env))
+  }
+  return { type: 5, data: { flags: EPHEMERAL } }
+}
+
+async function doStart(kv, guildId, groupSize, categoryId, channelId, applicationId, interactionToken, env) {
+  const { postMessage, sendFollowupMessage, createCategory } = await import('../utils/discordApi.js')
+
+  let finalCategoryId = categoryId
+  if (!finalCategoryId) {
+    const cat = await createCategory(guildId, env.DISCORD_TOKEN, '🎲 Matchup')
+    if (cat) finalCategoryId = cat.id
+  }
+
+  const res = await postMessage(channelId, env.DISCORD_TOKEN, {
+    embeds: [{
+      title: '🎲 交流マッチング募集中！',
+      description: `グループサイズ: ${groupSize}人\n現在の参加者: 0人`,
+      color: 0x5865f2,
+    }],
+    components: [{
+      type: 1,
+      components: [{
+        type: 2,
+        custom_id: 'matchup_join',
+        label: '参加する ✋',
+        style: 1,
+      }],
+    }],
+  })
+
+  if (!res.ok) {
+    await sendFollowupMessage(applicationId, interactionToken, {
+      embeds: [{ title: 'エラー', description: '募集メッセージの投稿に失敗しました。', color: 0xed4245 }],
+      flags: 64,
+    })
+    return
+  }
+
+  const message = await res.json()
+
+  await setActive(kv, guildId, {
+    status: 'recruiting',
+    messageId: message.id,
+    channelId,
+    groupSize,
+    categoryId: finalCategoryId,
+    participants: [],
+    createdChannels: [],
+  })
+
+  await sendFollowupMessage(applicationId, interactionToken, {
+    embeds: [{ title: '✅ 募集開始', description: 'マッチング募集を開始しました。', color: 0x57f287 }],
+    flags: 64,
+  })
 }
 
 async function handleRun(kv, guildId, interaction, env, ctx) {
