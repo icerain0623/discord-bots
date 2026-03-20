@@ -1,3 +1,5 @@
+import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
+
 const VERSION = '0.9.0'
 
 const COMMANDS = [
@@ -17,6 +19,10 @@ function formatJST(isoString) {
 }
 
 export async function handleStatus(interaction, env) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
   const raw = await env.SESSION_KV.get('emoji-stats')
   let statsLine = '最終集計: 未実行'
   if (raw) {
