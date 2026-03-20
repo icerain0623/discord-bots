@@ -91,7 +91,7 @@ async function handleInitialContact(interaction, env) {
   // 投稿したメッセージからスレッドを作成
   const postedMessage = await res.json()
   const threadRes = await fetch(
-    `https://discord.com/api/v10/channels/${postedMessage.id}/threads`,
+    `https://discord.com/api/v10/channels/${env.CONTACT_CHANNEL_ID}/messages/${postedMessage.id}/threads`,
     {
       method: 'POST',
       headers: {
