@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { REST, Routes, SlashCommandBuilder, PermissionFlagsBits, ChannelType } from 'discord.js'
+import { REST, Routes, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType, PermissionFlagsBits, ChannelType } from 'discord.js'
 
 const commands = [
   new SlashCommandBuilder()
@@ -84,6 +84,27 @@ const commands = [
   new SlashCommandBuilder()
     .setName('contact')
     .setDescription('モデレーターに匿名で連絡します（通報・相談など）')
+    .toJSON(),
+  new ContextMenuCommandBuilder()
+    .setName('検閲')
+    .setType(ApplicationCommandType.Message)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+    .toJSON(),
+  new SlashCommandBuilder()
+    .setName('censor-settings')
+    .setDescription('検閲機能の設定を変更します')
+    .addStringOption(option =>
+      option
+        .setName('mode')
+        .setDescription('検閲モード')
+        .setRequired(true)
+        .addChoices(
+          { name: '全メッセージ対象', value: 'all' },
+          { name: '自分のメッセージのみ', value: 'self' },
+          { name: 'オフ', value: 'off' },
+        )
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
 ]
 

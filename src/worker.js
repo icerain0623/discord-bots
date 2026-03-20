@@ -4,6 +4,8 @@ import { handleEmojiStats } from './commands/emojiStats.js'
 import { handleStatus } from './commands/status.js'
 import { handleContact } from './commands/contact.js'
 import { handleMatchup } from './commands/matchup.js'
+import { handleCensor } from './commands/censor.js'
+import { handleCensorSettings } from './commands/censorSettings.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -60,6 +62,17 @@ export default {
         interaction.data?.name === 'contact'
       ) {
         result = await handleContact(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'censor-settings'
+      ) {
+        result = await handleCensorSettings(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === '検閲'
+      ) {
+        ctx.waitUntil(handleCensor(interaction, env))
+        return Response.json({ type: 5, data: { flags: 64 } })
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
