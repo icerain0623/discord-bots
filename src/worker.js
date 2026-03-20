@@ -12,7 +12,7 @@ const InteractionType = {
 }
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 })
     }
