@@ -1,4 +1,5 @@
 import { handleButton } from '../src/interactions/buttons.js'
+import { handleModalSubmit } from '../src/interactions/modals.js'
 
 function createMockKV() {
   const store = new Map()
@@ -58,6 +59,49 @@ describe('matchup_join button', () => {
     const env = { SESSION_KV: sessionKV, MATCHUP_KV: matchupKV }
     const result = await handleButton(makeButtonInteraction('matchup_join'), env)
     expect(result.data.components[0].components[0].type).toBe(3)
+  })
+})
+
+describe('matchup_free_topics modal', () => {
+  test('registers participant with free topics without requiring SESSION_KV session', async () => {
+    const sessionKV = createMockKV()
+    const matchupKV = createMockKV()
+    await matchupKV.put('matchup-active:g123', JSON.stringify({
+      status: 'recruiting',
+      groupSize: 2,
+      participants: [],
+      channelId: 'ch1',
+      messageId: 'msg1',
+      _pendingTopics: { user1: { topics: ['ゲーム'], freeTopics: [] } },
+    }))
+    const env = { SESSION_KV: sessionKV, MATCHUP_KV: matchupKV, DISCORD_TOKEN: 'fake' }
+    const interaction = {
+      guild_id: 'g123',
+      member: { user: { id: 'user1', username: 'TestUser' } },
+      data: {
+        custom_id: 'matchup_free_topics',
+        components: [{ components: [{ custom_id: 'free_topics', value: 'カフェ巡り、読書' }] }],
+      },
+    }
+
+    // Mock global fetch for editMessage
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({}),
+      headers: new Headers({ 'x-ratelimit-remaining': '10' }),
+    })
+    try {
+      const result = await handleModalSubmit(interaction, env)
+      expect(result.data.content).toContain('参加登録しました')
+      expect(result.data.content).toContain('カフェ巡り')
+
+      const active = JSON.parse(await matchupKV.get('matchup-active:g123'))
+      expect(active.participants).toHaveLength(1)
+      expect(active.participants[0].freeTopics).toEqual(['カフェ巡り', '読書'])
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })
 

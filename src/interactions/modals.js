@@ -53,10 +53,15 @@ function extractFields(interaction, keys) {
 }
 
 export async function handleModalSubmit(interaction, env) {
-  const kv = env.SESSION_KV
   const userId = getUserId(interaction)
   const customId = interaction.data.custom_id
 
+  // Route matchup modals before intro session check
+  if (customId === 'matchup_free_topics') {
+    return handleMatchupFreeTopics(interaction, env, userId)
+  }
+
+  const kv = env.SESSION_KV
   const session = await get(kv, userId)
   if (!session) return ephemeralMsg(SESSION_EXPIRED_MSG)
 
@@ -91,44 +96,44 @@ export async function handleModalSubmit(interaction, env) {
     return ephemeralMsg(`**入力完了！** 以下の内容で投稿します。\n\n${preview}`, [confirmRow()])
   }
 
-  if (customId === 'matchup_free_topics') {
-    const { getActive, setActive } = await import('../utils/matchupKvStore.js')
-    const { editMessage } = await import('../utils/discordApi.js')
-    const matchupKv = env.MATCHUP_KV
-    const guildId = interaction.guild_id
+  return ephemeralMsg('不明なインタラクションです。')
+}
 
-    const active = await getActive(matchupKv, guildId)
-    if (!active || active.status !== 'recruiting') {
-      return ephemeralMsg('現在募集中のマッチングイベントはありません。')
-    }
+async function handleMatchupFreeTopics(interaction, env, userId) {
+  const { getActive, setActive } = await import('../utils/matchupKvStore.js')
+  const { editMessage } = await import('../utils/discordApi.js')
+  const matchupKv = env.MATCHUP_KV
+  const guildId = interaction.guild_id
 
-    const freeText = extractFields(interaction, ['free_topics']).free_topics || ''
-    const freeTopics = freeText.split(/[,、]/).map(s => s.trim()).filter(Boolean)
-
-    const pending = active._pendingTopics?.[userId] || { topics: [], freeTopics: [] }
-    pending.freeTopics = freeTopics
-
-    active.participants.push({
-      userId,
-      topics: pending.topics,
-      freeTopics: pending.freeTopics,
-    })
-    if (active._pendingTopics) delete active._pendingTopics[userId]
-    await setActive(matchupKv, guildId, active)
-
-    const count = active.participants.length
-    await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
-      embeds: [{
-        title: '🎲 交流マッチング募集中！',
-        description: `グループサイズ: ${active.groupSize}人\n現在の参加者: ${count}人`,
-        color: 0x5865f2,
-      }],
-    })
-
-    const allTopics = [...pending.topics, ...freeTopics.map(t => `「${t}」`)]
-    const topicDisplay = allTopics.length > 0 ? allTopics.join(', ') : 'なし'
-    return ephemeralMsg(`✅ 参加登録しました！ トピック: ${topicDisplay}`)
+  const active = await getActive(matchupKv, guildId)
+  if (!active || active.status !== 'recruiting') {
+    return ephemeralMsg('現在募集中のマッチングイベントはありません。')
   }
 
-  return ephemeralMsg('不明なインタラクションです。')
+  const freeText = extractFields(interaction, ['free_topics']).free_topics || ''
+  const freeTopics = freeText.split(/[,、]/).map(s => s.trim()).filter(Boolean)
+
+  const pending = active._pendingTopics?.[userId] || { topics: [], freeTopics: [] }
+  pending.freeTopics = freeTopics
+
+  active.participants.push({
+    userId,
+    topics: pending.topics,
+    freeTopics: pending.freeTopics,
+  })
+  if (active._pendingTopics) delete active._pendingTopics[userId]
+  await setActive(matchupKv, guildId, active)
+
+  const count = active.participants.length
+  await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
+    embeds: [{
+      title: '🎲 交流マッチング募集中！',
+      description: `グループサイズ: ${active.groupSize}人\n現在の参加者: ${count}人`,
+      color: 0x5865f2,
+    }],
+  })
+
+  const allTopics = [...pending.topics, ...freeTopics.map(t => `「${t}」`)]
+  const topicDisplay = allTopics.length > 0 ? allTopics.join(', ') : 'なし'
+  return ephemeralMsg(`✅ 参加登録しました！ トピック: ${topicDisplay}`)
 }
