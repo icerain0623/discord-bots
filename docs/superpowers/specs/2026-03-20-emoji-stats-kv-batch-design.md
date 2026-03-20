@@ -38,41 +38,68 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 ```json
 {
   "weeks": {
-    "2026-W12": { "😂": 50, "🔥": 30 },
-    "2026-W11": { "😂": 78, "🔥": 65 },
-    "2026-W10": { "😂": 42, "🔥": 28 }
+    "2026-W12": {
+      "counts": { "😂": 50, "🔥": 30 },
+      "messageCount": 500,
+      "channelCount": 20
+    },
+    "2026-W11": {
+      "counts": { "😂": 78, "🔥": 65 },
+      "messageCount": 620,
+      "channelCount": 20
+    }
   },
+  "lastMessageId": "1234567890123456789",
   "lastRun": "2026-03-20T10:00:00Z"
 }
 ```
 
 - 週キーは ISO 8601 形式（月曜始まり、例: `2026-W12`）
-- サイズ: 1 週あたり数 KB 程度。KV 値上限 25 MiB に対して数年分でも問題なし
+- `lastMessageId`: Discord Snowflake ID。次回実行時に `after` パラメータとして使用
+- `lastRun`: 表示用の最終集計日時
+- 各週に `messageCount` と `channelCount` を保持（フッター表示用）
+- サイズ: 1 週あたり数 KB。KV 値上限 25 MiB に対して数年分でも問題なし。データのプルーニングは行わない
 
 ## コンポーネント
 
 ### 1. ローカル集計スクリプト (`scripts/collect-emoji-stats.js`)
 
 - `dotenv/config` で `.env` から `DISCORD_TOKEN`, `GUILD_ID` を読み込む
-- 既存の `discordApi.js`, `emojiCounter.js` の関数を直接 import して再利用
-- チャンネル数・スレッド数の上限なし、ページ数上限を撤廃
+- 既存の `emojiCounter.js` の関数を再利用
+- チャンネル数・スレッド数の上限なし
+
+#### メッセージ取得
+
+`discordApi.js` に新関数 `getAllMessagesSince(channelId, token, afterId)` を追加する。
+
+- `after` パラメータで `afterId` 以降のメッセージを取得（古い順）
+- ページ数上限なし（ローカル実行用）
+- 既存の `getAllMessages` は変更しない（Worker 側では使わなくなるが後方互換を維持）
 
 #### 初回実行（KV にデータなし）
 
-- 全期間のメッセージを取得（ページ数上限なし、時間をかけて収集）
-- メッセージを ISO 週番号ごとに振り分けてカウント
+- `afterId` なしで全期間のメッセージを取得（時間をかけて収集）
+- メッセージを `msg.timestamp` の ISO 週番号で振り分け、週ごとに `countEmojis` を呼び出してカウント
 - 結果を KV に書き込み
 
 #### 2 回目以降
 
-- KV から既存データを読み取り、`lastRun` を取得
-- `lastRun` 以降のメッセージのみ取得（Discord API の `after` パラメータ使用）
+- KV から既存データを読み取り、`lastMessageId` を取得
+- `getAllMessagesSince(channelId, token, lastMessageId)` で新規メッセージのみ取得
 - 新規メッセージを週ごとに振り分けてカウント
-- 既存の週別データにマージ（加算）して KV に書き戻し
+- 既存の週別データにマージ（各絵文字のカウントを加算）して KV に書き戻し
+
+#### レートリミット対応
+
+ローカル実行時は API 呼び出し回数が多くなるため、`discordFetch` のレートリミット処理を強化する。
+
+- 429 レスポンス時は `Retry-After` ヘッダーの値だけ待機してリトライ
+- 既存の `x-ratelimit-remaining === '0'` のハンドリングはそのまま維持
 
 #### KV 書き込み
 
-- `child_process.execSync` で `npx wrangler kv:key put --namespace-id <KV_ID>` を実行
+- JSON を一時ファイルに書き出し、`child_process.execSync` で `npx wrangler kv:key put --namespace-id <KV_ID> --path <tmpfile>` を実行
+- KV namespace ID は `wrangler.toml` の `id` フィールドから読み取る（`fs.readFileSync` + パース）
 - 前提: `wrangler login` 済みであること
 
 #### 実行方法
@@ -100,15 +127,27 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 
 - **今週**: 現在の ISO 週番号のデータ
 - **先週**: 現在の ISO 週番号 - 1 のデータ
-- **今月**: 現在の月に含まれる週のデータを合算（月曜始まりの週が月をまたぐ場合は丸ごと含める）
+- **今月**: 現在の月に含まれる週のデータを合算。週の所属月は木曜日の月で判定（ISO 8601 準拠）
 - **先月**: 前月に含まれる週のデータを合算（同上）
 - **全期間**: 全週のデータを合算
 
-### 4. フッター表示
+### 4. Embed 表示
+
+#### タイトル
+
+期間に応じて動的に変更する。
+
+- `📊 絵文字ランキング（今週）`
+- `📊 絵文字ランキング（先月）`
+- `📊 絵文字ランキング（全期間）`
+
+#### フッター
 
 ```
 集計対象: 20チャンネル / 1,234メッセージ（最終集計: 2026/03/20 19:00 JST）
 ```
+
+`messageCount` と `channelCount` は該当週の値を合算して表示。
 
 ## 変更ファイル一覧
 
@@ -117,13 +156,13 @@ emoji-stats コマンドのリアルタイム集計を廃止し、ローカル P
 | `scripts/collect-emoji-stats.js` | 新規: ローカル集計スクリプト |
 | `src/commands/emojiStats.js` | KV 読み取り + 期間別合算に書き換え |
 | `src/worker.js` | deferred → 即時レスポンスに変更、`ctx.waitUntil` 削除 |
-| `src/utils/formatEmojiStats.js` | フッターに最終集計日時（JST）追加 |
-| `src/utils/discordApi.js` | `MAX_CHANNELS`, `MAX_PAGES_PER_CHANNEL` 制限を撤廃。`sendFollowup` はエラーハンドリング用に残置 |
+| `src/utils/formatEmojiStats.js` | タイトルに期間ラベル、フッターに最終集計日時（JST）追加 |
+| `src/utils/discordApi.js` | `getAllMessagesSince` 追加、`discordFetch` に 429 リトライ追加 |
 | `src/deploy-commands.js` | `期間` オプション追加 |
 | `package.json` | `"collect": "node scripts/collect-emoji-stats.js"` 追加 |
 
 ## テスト方針
 
-- `formatEmojiStats` のテストに `collectedAt` のケースを追加
-- 期間別の週フィルタ・合算ロジックのユニットテストを追加
+- `formatEmojiStats` のテストに `collectedAt` と `periodLabel` のケースを追加
+- 期間別の週フィルタ・合算ロジック（ISO 週 → 月の所属判定含む）のユニットテストを追加
 - ローカルスクリプトは手動実行で確認（Discord API への実リクエストが必要なため）
