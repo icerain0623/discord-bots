@@ -133,7 +133,10 @@ async function handleModeratorReply(interaction, env, reportId) {
     embeds: [{
       title: '📬 モデレーターからの返信',
       description: body,
-      fields: [{ name: 'レポートID', value: reportId, inline: true }],
+      fields: [
+        { name: '返信者', value: moderatorName, inline: true },
+        { name: 'レポートID', value: reportId, inline: true },
+      ],
       color: 0x57f287,
       timestamp: new Date().toISOString(),
     }],
