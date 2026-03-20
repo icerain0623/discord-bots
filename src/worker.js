@@ -1,6 +1,6 @@
 import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
-import { collectAndRespond as emojiStatsCollect } from './commands/emojiStats.js'
+import { handleEmojiStats } from './commands/emojiStats.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -41,8 +41,7 @@ export default {
         interaction.type === InteractionType.APPLICATION_COMMAND &&
         interaction.data?.name === 'emoji-stats'
       ) {
-        ctx.waitUntil(emojiStatsCollect(interaction, env))
-        return Response.json({ type: 5 })
+        result = await handleEmojiStats(interaction, env)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
