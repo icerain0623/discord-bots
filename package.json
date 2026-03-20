@@ -8,7 +8,8 @@
     "deploy": "node src/deploy-commands.js",
     "publish": "wrangler deploy",
     "lint": "eslint src/ tests/",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "collect": "node scripts/collect-emoji-stats.js"
   },
   "jest": {
     "transform": {}
