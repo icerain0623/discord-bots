@@ -1,4 +1,4 @@
-import { getTextChannels, getAllMessages, fetchAllChannelMessages, sendFollowup } from '../src/utils/discordApi.js'
+import { getTextChannels, getAllMessages, fetchAllChannelMessages, sendFollowupMessage } from '../src/utils/discordApi.js'
 
 const mockFetch = (responses) => {
   let callIndex = 0
@@ -62,7 +62,7 @@ describe('getAllMessages', () => {
   })
 })
 
-describe('sendFollowup', () => {
+describe('sendFollowupMessage', () => {
   test('webhook URL に Authorization ヘッダーなしで送信する', async () => {
     let capturedUrl, capturedHeaders, capturedBody
     globalThis.fetch = async (url, options) => {
@@ -71,7 +71,7 @@ describe('sendFollowup', () => {
       capturedBody = JSON.parse(options.body)
       return jsonResponse({ id: 'msg1' })
     }
-    await sendFollowup('app1', 'token1', { title: 'test' })
+    await sendFollowupMessage('app1', 'token1', { embeds: [{ title: 'test' }] })
     expect(capturedUrl).toBe('https://discord.com/api/v10/webhooks/app1/token1')
     expect(capturedHeaders.Authorization).toBeUndefined()
     expect(capturedBody.embeds[0].title).toBe('test')

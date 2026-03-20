@@ -1,3 +1,4 @@
+import { handleContactModalSubmit } from './contactModals.js'
 import { get, update, setStep } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
@@ -55,6 +56,11 @@ function extractFields(interaction, keys) {
 export async function handleModalSubmit(interaction, env) {
   const userId = getUserId(interaction)
   const customId = interaction.data.custom_id
+
+  // Route contact modals before intro session check
+  if (customId.startsWith('contact_')) {
+    return await handleContactModalSubmit(interaction, env)
+  }
 
   // Route matchup modals before intro session check
   if (customId === 'matchup_free_topics') {
@@ -115,7 +121,8 @@ async function handleMatchupFreeTopics(interaction, env, userId) {
   }
 
   const freeText = extractFields(interaction, ['free_topics']).free_topics || ''
-  const freeTopics = freeText.split(/[,、]/).map(s => s.trim()).filter(Boolean)
+  const { sanitizeTopicName } = await import('../utils/matchupLogic.js')
+  const freeTopics = freeText.split(/[,、]/).map(s => sanitizeTopicName(s.trim())).filter(Boolean)
 
   const pending = active._pendingTopics?.[userId] || { topics: [], freeTopics: [] }
   pending.freeTopics = freeTopics

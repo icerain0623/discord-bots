@@ -1,3 +1,11 @@
+export function sanitizeTopicName(name) {
+  return name
+    .replace(/@everyone/g, 'everyone')
+    .replace(/@here/g, 'here')
+    .replace(/<@&?\d+>/g, '')
+    .trim()
+}
+
 export function shuffleAndGroup(participants, groupSize) {
   const shuffled = [...participants]
   for (let i = shuffled.length - 1; i > 0; i--) {

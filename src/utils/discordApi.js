@@ -145,18 +145,6 @@ export async function getForumThreads(guildId, forumChannels, token) {
   return threads
 }
 
-export async function sendFollowup(applicationId, interactionToken, embed) {
-  const res = await discordFetch(`/webhooks/${applicationId}/${interactionToken}`, null, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ embeds: [embed] }),
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    console.error(`sendFollowup failed (${res.status}):`, text)
-  }
-}
-
 export async function createChannel(guildId, token, payload) {
   const res = await discordFetch(`/guilds/${guildId}/channels`, token, {
     method: 'POST',

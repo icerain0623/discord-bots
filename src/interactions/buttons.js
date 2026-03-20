@@ -3,6 +3,7 @@ import { buildModal2 } from '../modals/modal2.js'
 import { buildModal3 } from '../modals/modal3.js'
 import { buildModal4 } from '../modals/modal4.js'
 import { buildModal5 } from '../modals/modal5.js'
+import { buildReplyModal, buildFollowupModal } from '../modals/contactModal.js'
 import { create, get, remove } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
@@ -233,6 +234,7 @@ export async function handleButton(interaction, env) {
     if (!active) return ephemeralMsg('マッチングイベントが見つかりません。')
 
     active.participants = active.participants.filter(p => p.userId !== userId)
+    if (active._pendingTopics) delete active._pendingTopics[userId]
     await setActive(matchupKv, guildId, active)
 
     const count = active.participants.length
@@ -249,6 +251,16 @@ export async function handleButton(interaction, env) {
 
   if (customId === 'matchup_cancel_deny') {
     return updateMsg('参加登録はそのままです。')
+  }
+
+  if (customId.startsWith('contact_reply_')) {
+    const reportId = customId.replace('contact_reply_', '')
+    return showModal(buildReplyModal(reportId))
+  }
+
+  if (customId.startsWith('contact_followup_')) {
+    const reportId = customId.replace('contact_followup_', '')
+    return showModal(buildFollowupModal(reportId))
   }
 
   return ephemeralMsg('不明なインタラクションです。')
