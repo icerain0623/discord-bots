@@ -11,6 +11,7 @@
 | Bot ステータス | バージョン・集計状況・登録コマンドを表示（管理者のみ） | ✅ 稼働中 | [詳細](docs/status.md) |
 | 匿名コンタクト | モデレーターへの匿名通報・相談（双方向やり取り対応） | 🧪 テスト中 | [詳細](docs/contact.md) |
 | 交流マッチング | メンバーをランダムにグループ分けして専用チャンネルで交流 | 🧪 テスト機能 | [詳細](docs/matchup.md) |
+| 検閲（ジョーク） | メッセージを1984風に検閲するコンテキストメニュー | ✅ 稼働中 | — |
 
 ---
 
@@ -33,7 +34,9 @@ discord-bots/
 │   │   ├── emojiStats.js          # /emoji-stats コマンド
 │   │   ├── status.js              # /status コマンド
 │   │   ├── matchup.js             # /matchup コマンド
-│   │   └── contact.js             # /contact コマンド
+│   │   ├── contact.js             # /contact コマンド
+│   │   ├── censor.js              # 検閲コンテキストメニューコマンド
+│   │   └── censorSettings.js      # /censor-settings コマンド
 │   ├── interactions/
 │   │   ├── buttons.js             # ボタン操作ハンドラー
 │   │   ├── modals.js              # モーダル送信ハンドラー
@@ -53,7 +56,9 @@ discord-bots/
 │       ├── matchupLogic.js        # シャッフル・グループ分けロジック
 │       ├── matchupChannelUtils.js # チャンネル作成ペイロード生成
 │       ├── contactStore.js        # 匿名コンタクト KV データアクセス
-│       └── reportId.js            # レポートID生成ユーティリティ
+│       ├── reportId.js            # レポートID生成ユーティリティ
+│       ├── permissions.js         # 権限チェックユーティリティ
+│       └── verify.js              # Discord リクエスト署名検証
 ├── docs/                          # 機能別ドキュメント
 ├── scripts/
 │   └── collect-emoji-stats.js     # ローカルバッチ集計スクリプト
