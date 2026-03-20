@@ -1,6 +1,7 @@
 import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
 import { handleEmojiStats } from './commands/emojiStats.js'
+import { handleStatus } from './commands/status.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -37,6 +38,11 @@ export default {
         interaction.data?.name === 'setup-intro'
       ) {
         result = await setupIntroExecute(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'status'
+      ) {
+        result = await handleStatus(interaction, env)
       } else if (
         interaction.type === InteractionType.APPLICATION_COMMAND &&
         interaction.data?.name === 'emoji-stats'

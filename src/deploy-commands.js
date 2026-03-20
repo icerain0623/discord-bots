@@ -24,6 +24,11 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('status')
+    .setDescription('Bot のステータスを表示します')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)
