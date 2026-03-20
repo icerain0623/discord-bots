@@ -1,4 +1,4 @@
-import { createContact, getContact, addMessage } from '../utils/contactStore.js'
+import { createContact, getContact, addMessage, setThreadId } from '../utils/contactStore.js'
 import { generateReportId } from '../utils/reportId.js'
 import { getUserId, getDisplayName } from '../utils/interactionHelpers.js'
 
@@ -88,6 +88,25 @@ async function handleInitialContact(interaction, env) {
     }
   }
 
+  // 投稿したメッセージからスレッドを作成
+  const postedMessage = await res.json()
+  const threadRes = await fetch(
+    `https://discord.com/api/v10/channels/${postedMessage.id}/threads`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${env.DISCORD_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: `匿名コンタクト: ${reportId}` }),
+    },
+  )
+
+  if (threadRes.ok) {
+    const thread = await threadRes.json()
+    await setThreadId(kv, reportId, thread.id)
+  }
+
   return {
     type: 4,
     data: { content: `✅ 匿名で送信しました（レポートID: ${reportId}）`, flags: EPHEMERAL },
@@ -107,6 +126,8 @@ async function handleModeratorReply(interaction, env, reportId) {
   }
 
   await addMessage(kv, reportId, 'moderator', body)
+
+  const moderatorName = getDisplayName(interaction)
 
   const dmChannelRes = await fetch('https://discord.com/api/v10/users/@me/channels', {
     method: 'POST',
@@ -173,8 +194,8 @@ async function handleModeratorReply(interaction, env, reportId) {
     }
   }
 
-  // モデレーターチャンネルにも返信内容を投稿（他のモデレーターが対応状況を把握できるように）
-  const moderatorName = getDisplayName(interaction)
+  // スレッド（またはチャンネル）に返信内容を投稿
+  const targetChannelId = contact.threadId || env.CONTACT_CHANNEL_ID
   const modNotify = {
     embeds: [{
       title: '📬 モデレーターが返信しました',
@@ -198,7 +219,7 @@ async function handleModeratorReply(interaction, env, reportId) {
   }
 
   await fetch(
-    `https://discord.com/api/v10/channels/${env.CONTACT_CHANNEL_ID}/messages`,
+    `https://discord.com/api/v10/channels/${targetChannelId}/messages`,
     {
       method: 'POST',
       headers: {
@@ -250,8 +271,9 @@ async function handleSenderFollowup(interaction, env, reportId) {
     }],
   }
 
+  const followupChannelId = contact.threadId || env.CONTACT_CHANNEL_ID
   const res = await fetch(
-    `https://discord.com/api/v10/channels/${env.CONTACT_CHANNEL_ID}/messages`,
+    `https://discord.com/api/v10/channels/${followupChannelId}/messages`,
     {
       method: 'POST',
       headers: {

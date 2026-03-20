@@ -20,6 +20,16 @@ export async function getContact(kv, reportId) {
   return JSON.parse(raw)
 }
 
+export async function setThreadId(kv, reportId, threadId) {
+  const contact = await getContact(kv, reportId)
+  if (!contact) return null
+  contact.threadId = threadId
+  await kv.put(`contact_${reportId}`, JSON.stringify(contact), {
+    expirationTtl: TTL_SECONDS,
+  })
+  return contact
+}
+
 export async function addMessage(kv, reportId, from, body) {
   const contact = await getContact(kv, reportId)
   if (!contact) return null
