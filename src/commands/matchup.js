@@ -221,6 +221,7 @@ async function doRun(kv, guildId, active, interaction, env) {
   active.status = 'matched'
   active.createdChannels = createdChannels
   active.categoryId = categoryId
+  delete active._pendingTopics
   await setActive(kv, guildId, active)
 
   await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {

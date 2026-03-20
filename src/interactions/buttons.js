@@ -196,6 +196,10 @@ export async function handleButton(interaction, env) {
       return ephemeralMsg('現在募集中のマッチングイベントはありません。')
     }
 
+    if (active.participants.some(p => p.userId === userId)) {
+      return updateMsg('既に参加登録済みです。')
+    }
+
     const pending = active._pendingTopics?.[userId] || { topics: [], freeTopics: [] }
     active.participants.push({
       userId,
@@ -244,7 +248,7 @@ export async function handleButton(interaction, env) {
   }
 
   if (customId === 'matchup_cancel_deny') {
-    return ephemeralMsg('参加登録はそのままです。')
+    return updateMsg('参加登録はそのままです。')
   }
 
   return ephemeralMsg('不明なインタラクションです。')

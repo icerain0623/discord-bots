@@ -110,6 +110,10 @@ async function handleMatchupFreeTopics(interaction, env, userId) {
     return ephemeralMsg('現在募集中のマッチングイベントはありません。')
   }
 
+  if (active.participants.some(p => p.userId === userId)) {
+    return ephemeralMsg('既に参加登録済みです。')
+  }
+
   const freeText = extractFields(interaction, ['free_topics']).free_topics || ''
   const freeTopics = freeText.split(/[,、]/).map(s => s.trim()).filter(Boolean)
 
