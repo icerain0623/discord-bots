@@ -2,6 +2,7 @@ import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
 import { handleEmojiStats } from './commands/emojiStats.js'
 import { handleStatus } from './commands/status.js'
+import { handleMatchup } from './commands/matchup.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -48,6 +49,11 @@ export default {
         interaction.data?.name === 'emoji-stats'
       ) {
         result = await handleEmojiStats(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'matchup'
+      ) {
+        result = await handleMatchup(interaction, env, ctx)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
