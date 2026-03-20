@@ -61,10 +61,13 @@ export async function handleMatchup(interaction, env, ctx) {
 
 async function handleTopics(kv, guildId, sub, options) {
   if (sub === 'add') {
-    const result = await addTopic(kv, guildId, options.name)
-    if (result.error === 'duplicate') return ephemeralMsg(`「${options.name}」は既に登録されています。`)
+    const { sanitizeTopicName } = await import('../utils/matchupLogic.js')
+    const safeName = sanitizeTopicName(options.name)
+    if (!safeName) return ephemeralMsg('無効なトピック名です。')
+    const result = await addTopic(kv, guildId, safeName)
+    if (result.error === 'duplicate') return ephemeralMsg(`「${safeName}」は既に登録されています。`)
     if (result.error === 'limit') return ephemeralMsg('トピックは最大25個までです。')
-    return ephemeralMsg(`✅ トピック「${options.name}」を追加しました。`)
+    return ephemeralMsg(`✅ トピック「${safeName}」を追加しました。`)
   }
 
   if (sub === 'remove') {
