@@ -1,6 +1,6 @@
 const MEDALS = ['🥇', '🥈', '🥉']
 
-export function formatEmojiStats(counts, { channelCount, messageCount }) {
+export function formatEmojiStats(counts, { sourceLabel, messageCount, periodLabel, collectedAt }) {
   const sorted = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
@@ -17,12 +17,17 @@ export function formatEmojiStats(counts, { channelCount, messageCount }) {
       .join('\n')
   }
 
+  let footerText = `集計対象: ${sourceLabel} / ${messageCount.toLocaleString()}メッセージ`
+  if (collectedAt) {
+    const jst = new Date(new Date(collectedAt).getTime() + 9 * 60 * 60 * 1000)
+    const dateStr = `${jst.getUTCFullYear()}/${String(jst.getUTCMonth() + 1).padStart(2, '0')}/${String(jst.getUTCDate()).padStart(2, '0')} ${String(jst.getUTCHours()).padStart(2, '0')}:${String(jst.getUTCMinutes()).padStart(2, '0')}`
+    footerText += `（最終集計: ${dateStr} JST）`
+  }
+
   return {
-    title: '📊 絵文字ランキング（過去7日間）',
+    title: `📊 絵文字ランキング（${periodLabel}）`,
     description,
     color: 0x5865f2,
-    footer: {
-      text: `集計対象: ${channelCount}チャンネル / ${messageCount.toLocaleString()}メッセージ`,
-    },
+    footer: { text: footerText },
   }
 }
