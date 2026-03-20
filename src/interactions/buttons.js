@@ -110,5 +110,142 @@ export async function handleButton(interaction, env) {
     return updateMsg('キャンセルしました。')
   }
 
+  // --- Matchup handlers ---
+  if (customId === 'matchup_topic_select') {
+    const { getActive, setActive } = await import('../utils/matchupKvStore.js')
+    const matchupKv = env.MATCHUP_KV
+    const guildId = interaction.guild_id
+
+    const active = await getActive(matchupKv, guildId)
+    if (!active) return ephemeralMsg('マッチングイベントが見つかりません。')
+
+    const selectedTopics = interaction.data.values || []
+    if (!active._pendingTopics) active._pendingTopics = {}
+    active._pendingTopics[userId] = { topics: selectedTopics, freeTopics: [] }
+    await setActive(matchupKv, guildId, active)
+
+    return ephemeralMsg('自由入力のトピックも追加しますか？', [{
+      type: 1,
+      components: [
+        { type: 2, custom_id: 'matchup_free_yes', label: 'はい', style: 1 },
+        { type: 2, custom_id: 'matchup_free_skip', label: 'スキップ', style: 2 },
+      ],
+    }])
+  }
+
+  if (customId === 'matchup_join') {
+    const { getActive, getTopics } = await import('../utils/matchupKvStore.js')
+    const matchupKv = env.MATCHUP_KV
+    const guildId = interaction.guild_id
+
+    const active = await getActive(matchupKv, guildId)
+    if (!active || active.status !== 'recruiting') {
+      return ephemeralMsg('現在募集中のマッチングイベントはありません。')
+    }
+
+    const existing = active.participants.find(p => p.userId === userId)
+    if (existing) {
+      return ephemeralMsg('既に参加しています。取り消しますか？', [{
+        type: 1,
+        components: [
+          { type: 2, custom_id: 'matchup_cancel_confirm', label: '参加を取り消す', style: 4 },
+          { type: 2, custom_id: 'matchup_cancel_deny', label: 'そのまま', style: 2 },
+        ],
+      }])
+    }
+
+    const topics = await getTopics(matchupKv, guildId)
+    if (topics.length === 0) {
+      const { buildMatchupFreeTopicsModal } = await import('../modals/matchupFreeTopics.js')
+      return showModal(buildMatchupFreeTopicsModal())
+    }
+
+    return {
+      type: 4,
+      data: {
+        content: '参加するトピックを選んでください（複数選択可）：',
+        flags: EPHEMERAL,
+        components: [{
+          type: 1,
+          components: [{
+            type: 3,
+            custom_id: 'matchup_topic_select',
+            placeholder: 'トピックを選択...',
+            min_values: 0,
+            max_values: topics.length,
+            options: topics.map(t => ({ label: t, value: t })),
+          }],
+        }],
+      },
+    }
+  }
+
+  if (customId === 'matchup_free_yes') {
+    const { buildMatchupFreeTopicsModal } = await import('../modals/matchupFreeTopics.js')
+    return showModal(buildMatchupFreeTopicsModal())
+  }
+
+  if (customId === 'matchup_free_skip') {
+    const { getActive, setActive } = await import('../utils/matchupKvStore.js')
+    const { editMessage } = await import('../utils/discordApi.js')
+    const matchupKv = env.MATCHUP_KV
+    const guildId = interaction.guild_id
+
+    const active = await getActive(matchupKv, guildId)
+    if (!active || active.status !== 'recruiting') {
+      return ephemeralMsg('現在募集中のマッチングイベントはありません。')
+    }
+
+    const pending = active._pendingTopics?.[userId] || { topics: [], freeTopics: [] }
+    active.participants.push({
+      userId,
+      topics: pending.topics,
+      freeTopics: pending.freeTopics,
+    })
+    if (active._pendingTopics) delete active._pendingTopics[userId]
+    await setActive(matchupKv, guildId, active)
+
+    const count = active.participants.length
+    await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
+      embeds: [{
+        title: '🎲 交流マッチング募集中！',
+        description: `グループサイズ: ${active.groupSize}人\n現在の参加者: ${count}人`,
+        color: 0x5865f2,
+      }],
+    })
+
+    const allTopics = [...pending.topics, ...pending.freeTopics.map(t => `「${t}」`)]
+    const topicDisplay = allTopics.length > 0 ? allTopics.join(', ') : 'なし'
+    return updateMsg(`✅ 参加登録しました！ トピック: ${topicDisplay}`)
+  }
+
+  if (customId === 'matchup_cancel_confirm') {
+    const { getActive, setActive } = await import('../utils/matchupKvStore.js')
+    const { editMessage } = await import('../utils/discordApi.js')
+    const matchupKv = env.MATCHUP_KV
+    const guildId = interaction.guild_id
+
+    const active = await getActive(matchupKv, guildId)
+    if (!active) return ephemeralMsg('マッチングイベントが見つかりません。')
+
+    active.participants = active.participants.filter(p => p.userId !== userId)
+    await setActive(matchupKv, guildId, active)
+
+    const count = active.participants.length
+    await editMessage(active.channelId, active.messageId, env.DISCORD_TOKEN, {
+      embeds: [{
+        title: '🎲 交流マッチング募集中！',
+        description: `グループサイズ: ${active.groupSize}人\n現在の参加者: ${count}人`,
+        color: 0x5865f2,
+      }],
+    })
+
+    return updateMsg('参加を取り消しました。')
+  }
+
+  if (customId === 'matchup_cancel_deny') {
+    return ephemeralMsg('参加登録はそのままです。')
+  }
+
   return ephemeralMsg('不明なインタラクションです。')
 }
