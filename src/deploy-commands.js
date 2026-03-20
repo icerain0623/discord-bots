@@ -8,7 +8,30 @@ const commands = [
     .toJSON(),
   new SlashCommandBuilder()
     .setName('emoji-stats')
-    .setDescription('過去7日間の絵文字ランキングを表示します')
+    .setDescription('絵文字ランキングを表示します')
+    .addStringOption(option =>
+      option
+        .setName('対象')
+        .setDescription('集計対象を選択')
+        .setRequired(true)
+        .addChoices(
+          { name: 'テキストチャンネル', value: 'channel' },
+          { name: 'フォーラム', value: 'forum' },
+        )
+    )
+    .addStringOption(option =>
+      option
+        .setName('期間')
+        .setDescription('集計期間を選択')
+        .setRequired(true)
+        .addChoices(
+          { name: '今週', value: 'this_week' },
+          { name: '先週', value: 'last_week' },
+          { name: '今月', value: 'this_month' },
+          { name: '先月', value: 'last_month' },
+          { name: '全期間', value: 'all' },
+        )
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
 ]
