@@ -1,6 +1,6 @@
 import { createContact, getContact, addMessage } from '../utils/contactStore.js'
 import { generateReportId } from '../utils/reportId.js'
-import { getUserId } from '../utils/interactionHelpers.js'
+import { getUserId, getDisplayName } from '../utils/interactionHelpers.js'
 
 const EPHEMERAL = 64
 
@@ -171,11 +171,15 @@ async function handleModeratorReply(interaction, env, reportId) {
   }
 
   // モデレーターチャンネルにも返信内容を投稿（他のモデレーターが対応状況を把握できるように）
+  const moderatorName = getDisplayName(interaction)
   const modNotify = {
     embeds: [{
       title: '📬 モデレーターが返信しました',
       description: body,
-      fields: [{ name: 'レポートID', value: reportId, inline: true }],
+      fields: [
+        { name: '返信者', value: moderatorName, inline: true },
+        { name: 'レポートID', value: reportId, inline: true },
+      ],
       color: 0x57f287,
       timestamp: new Date().toISOString(),
     }],
