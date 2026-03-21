@@ -12,6 +12,7 @@
 | 匿名コンタクト | モデレーターへの匿名通報・相談（双方向やり取り対応） | 🧪 テスト中 | [詳細](docs/contact.md) |
 | 交流マッチング | メンバーをランダムにグループ分けして専用チャンネルで交流 | 🧪 テスト機能 | [詳細](docs/matchup.md) |
 | 検閲（ジョーク） | メッセージを1984風に検閲するコンテキストメニュー | ✅ 稼働中 | — |
+| 組織図自動編成 | Discordロールから組織図を自動構成しEmbed表示 | 🧪 テスト機能 | — |
 
 ---
 
@@ -36,15 +37,18 @@ discord-bots/
 │   │   ├── matchup.js             # /matchup コマンド
 │   │   ├── contact.js             # /contact コマンド
 │   │   ├── censor.js              # 検閲コンテキストメニューコマンド
-│   │   └── censorSettings.js      # /censor-settings コマンド
+│   │   ├── censorSettings.js      # /censor-settings コマンド
+│   │   └── org.js                 # /org コマンド（組織図管理）
 │   ├── interactions/
 │   │   ├── buttons.js             # ボタン操作ハンドラー
 │   │   ├── modals.js              # モーダル送信ハンドラー
-│   │   └── contactModals.js       # 匿名コンタクト モーダルハンドラー
+│   │   ├── contactModals.js       # 匿名コンタクト モーダルハンドラー
+│   │   └── orgConfigHandler.js   # 組織図設定モーダルハンドラー
 │   ├── modals/
 │   │   ├── modal1.js〜modal3.js   # モーダル定義
 │   │   ├── matchupFreeTopics.js   # マッチング自由トピックモーダル
-│   │   └── contactModal.js        # 匿名コンタクト モーダル定義
+│   │   ├── contactModal.js        # 匿名コンタクト モーダル定義
+│   │   └── orgConfigModal.js     # 組織図設定モーダル定義
 │   └── utils/
 │       ├── sessionStore.js        # セッション管理（KV + TTL）
 │       ├── formatIntro.js         # 自己紹介テキスト整形
@@ -58,7 +62,9 @@ discord-bots/
 │       ├── contactStore.js        # 匿名コンタクト KV データアクセス
 │       ├── reportId.js            # レポートID生成ユーティリティ
 │       ├── permissions.js         # 権限チェックユーティリティ
-│       └── verify.js              # Discord リクエスト署名検証
+│       ├── verify.js              # Discord リクエスト署名検証
+│       ├── orgStore.js            # 組織図 KV データアクセス
+│       └── orgFormatter.js        # 組織図 Embed 整形ロジック
 ├── docs/                          # 機能別ドキュメント
 ├── scripts/
 │   └── collect-emoji-stats.js     # ローカルバッチ集計スクリプト
