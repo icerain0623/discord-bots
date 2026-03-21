@@ -1,4 +1,4 @@
-const EMBED_DESC_LIMIT = 4096
+const MESSAGE_LIMIT = 1800
 
 function formatJstTimestamp() {
   const now = new Date()
@@ -11,25 +11,36 @@ function formatJstTimestamp() {
   return `${y}-${m}-${d} ${h}:${min} (JST)`
 }
 
-function buildDepartmentSection(dept, roleNameToId, membersByRoleId) {
-  const lines = [`\n【${dept.name}】`]
+function formatMember(userId, userNameMap, debug) {
+  if (debug) return userNameMap.get(userId) || userId
+  return `<@${userId}>`
+}
+
+function buildDepartmentSection(dept, roleNameToId, membersByRoleId, userNameMap, debug) {
+  const lines = [`【${dept.name}】`]
   for (const roleName of dept.roles) {
     const roleId = roleNameToId.get(roleName)
     const members = roleId ? (membersByRoleId.get(roleId) || []) : []
     if (members.length === 0) {
       lines.push(`${roleName}：（空席）`)
     } else {
-      const mentions = members.map(m => `<@${m}>`).join(', ')
-      lines.push(`${roleName}：${mentions}`)
+      const names = members.map(m => formatMember(m, userNameMap, debug)).join(', ')
+      lines.push(`${roleName}：${names}`)
     }
   }
   return lines.join('\n')
 }
 
-export function buildOrgEmbeds(config, guildRoles, guildMembers) {
+export function buildOrgMessages(config, guildRoles, guildMembers, { debug = false } = {}) {
   const roleNameToId = new Map()
   for (const role of guildRoles) {
     roleNameToId.set(role.name, role.id)
+  }
+
+  const userNameMap = new Map()
+  for (const member of guildMembers) {
+    const name = member.nick || member.user.global_name || member.user.username
+    userNameMap.set(member.user.id, name)
   }
 
   const membersByRoleId = new Map()
@@ -43,31 +54,64 @@ export function buildOrgEmbeds(config, guildRoles, guildMembers) {
   }
 
   const sections = config.departments.map(dept =>
-    buildDepartmentSection(dept, roleNameToId, membersByRoleId)
+    buildDepartmentSection(dept, roleNameToId, membersByRoleId, userNameMap, debug)
   )
 
-  const header = '📋 組織図\n━━━━━━━━━━━━━━━'
-  const timestamp = formatJstTimestamp()
-  const embeds = []
-  let currentDesc = header
-
-  for (const section of sections) {
-    if (currentDesc.length + section.length > EMBED_DESC_LIMIT && currentDesc !== header) {
-      embeds.push({
-        description: currentDesc,
-        color: 0x5865f2,
-      })
-      currentDesc = section
-    } else {
-      currentDesc += section
+  // Collect role IDs already covered by department config
+  const assignedRoleIds = new Set()
+  for (const dept of config.departments) {
+    for (const roleName of dept.roles) {
+      const roleId = roleNameToId.get(roleName)
+      if (roleId) assignedRoleIds.add(roleId)
     }
   }
 
-  embeds.push({
-    description: currentDesc,
-    color: 0x5865f2,
-    footer: { text: `最終更新: ${timestamp}` },
-  })
+  // Build "未分類" section: roles with members but not in any department
+  const unassignedLines = []
+  for (const role of guildRoles) {
+    if (assignedRoleIds.has(role.id)) continue
+    if (role.name === '@everyone') continue
+    const members = membersByRoleId.get(role.id) || []
+    if (members.length === 0) continue
+    const names = members.map(m => formatMember(m, userNameMap, debug)).join(', ')
+    unassignedLines.push(`${role.name}：${names}`)
+  }
 
-  return embeds
+  // Also find members with no roles at all
+  const noRoleMembers = guildMembers.filter(m => m.roles.length === 0)
+  if (noRoleMembers.length > 0) {
+    const names = noRoleMembers.map(m => formatMember(m.user.id, userNameMap, debug)).join(', ')
+    unassignedLines.push(`ロールなし：${names}`)
+  }
+
+  if (unassignedLines.length > 0) {
+    sections.push(`【未分類】\n${unassignedLines.join('\n')}`)
+  }
+
+  const header = debug ? '📋 組織図（デバッグモード）\n━━━━━━━━━━━━━━━\n' : '📋 組織図\n━━━━━━━━━━━━━━━\n'
+  const timestamp = `\n最終更新: ${formatJstTimestamp()}`
+
+  // Split into multiple messages, respecting MESSAGE_LIMIT
+  const messages = []
+  let current = header
+
+  for (const section of sections) {
+    const lines = section.split('\n')
+
+    for (const line of lines) {
+      const candidate = current + (current.endsWith('\n') ? '' : '\n') + line + '\n'
+      if (candidate.length > MESSAGE_LIMIT && current !== header) {
+        messages.push(current.trimEnd())
+        current = line + '\n'
+      } else {
+        current = candidate
+      }
+    }
+    current += '\n'
+  }
+
+  current += timestamp
+  messages.push(current.trimEnd())
+
+  return messages
 }

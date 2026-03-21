@@ -178,7 +178,9 @@ export async function postMessage(channelId, token, payload) {
     body: JSON.stringify(body),
   })
   if (!res.ok) {
-    console.error(`postMessage failed (${res.status}):`, await res.text())
+    const errorText = await res.text()
+    console.error(`postMessage failed (${res.status}):`, errorText)
+    res._errorText = errorText
   }
   return res
 }
@@ -189,7 +191,9 @@ export async function editMessage(channelId, messageId, token, data) {
     body: JSON.stringify(data),
   })
   if (!res.ok) {
-    console.error(`editMessage failed (${res.status}):`, await res.text())
+    const errorText = await res.text()
+    console.error(`editMessage failed (${res.status}):`, errorText)
+    res._errorText = errorText
   }
   return res
 }

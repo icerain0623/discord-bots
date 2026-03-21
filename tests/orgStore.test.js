@@ -59,7 +59,7 @@ describe('orgStore', () => {
     test('stores panel info without TTL', async () => {
       await setOrgPanel(kv, 'guild1', '123', '456')
       const raw = await kv.get('org:panel:guild1')
-      expect(JSON.parse(raw)).toEqual({ channelId: '123', messageId: '456' })
+      expect(JSON.parse(raw)).toEqual({ channelId: '123', messageIds: '456' })
     })
   })
 

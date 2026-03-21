@@ -12,8 +12,8 @@ export async function getOrgPanel(kv, guildId) {
   return raw ? JSON.parse(raw) : null
 }
 
-export async function setOrgPanel(kv, guildId, channelId, messageId) {
-  await kv.put(`org:panel:${guildId}`, JSON.stringify({ channelId, messageId }))
+export async function setOrgPanel(kv, guildId, channelId, messageIds) {
+  await kv.put(`org:panel:${guildId}`, JSON.stringify({ channelId, messageIds }))
 }
 
 export async function deleteOrgPanel(kv, guildId) {
