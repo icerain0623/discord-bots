@@ -1,4 +1,5 @@
 import { handleContactModalSubmit } from './contactModals.js'
+import { handleOrgConfigModal } from './orgConfigHandler.js'
 import { get, update, setStep } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
@@ -65,6 +66,11 @@ export async function handleModalSubmit(interaction, env) {
   // Route matchup modals before intro session check
   if (customId === 'matchup_free_topics') {
     return handleMatchupFreeTopics(interaction, env, userId)
+  }
+
+  // Route org config modal
+  if (customId === 'org_config_modal') {
+    return handleOrgConfigModal(interaction, env)
   }
 
   const kv = env.SESSION_KV

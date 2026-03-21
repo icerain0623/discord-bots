@@ -6,6 +6,7 @@ import { handleContact } from './commands/contact.js'
 import { handleMatchup } from './commands/matchup.js'
 import { handleCensor } from './commands/censor.js'
 import { handleCensorSettings } from './commands/censorSettings.js'
+import { handleOrg } from './commands/org.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -73,6 +74,11 @@ export default {
       ) {
         ctx.waitUntil(handleCensor(interaction, env))
         return Response.json({ type: 5, data: { flags: 64 } })
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'org'
+      ) {
+        result = await handleOrg(interaction, env, ctx)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
