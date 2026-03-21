@@ -107,6 +107,29 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('org')
+    .setDescription('組織図を管理します')
+    .addSubcommand(sub =>
+      sub.setName('setup')
+        .setDescription('組織図パネルを設置します')
+        .addChannelOption(opt =>
+          opt.setName('channel')
+            .setDescription('設置先チャンネル')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('refresh')
+        .setDescription('組織図を最新のロール情報で更新します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('config')
+        .setDescription('部門定義を編集します')
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)
