@@ -1,5 +1,5 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
-import { getOrgConfig, setOrgConfig, getOrgPanel, setOrgPanel, deleteOrgPanel } from '../utils/orgStore.js'
+import { getOrgConfig, setOrgConfig, getOrgPanel, setOrgPanel } from '../utils/orgStore.js'
 import { buildOrgConfigModal } from '../modals/orgConfigModal.js'
 import { buildOrgMessages } from '../utils/orgFormatter.js'
 
