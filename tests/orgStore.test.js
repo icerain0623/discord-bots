@@ -5,7 +5,7 @@ function createMockKv() {
   const store = new Map()
   return {
     get: async (key) => store.get(key) ?? null,
-    put: async (key, value, opts) => store.set(key, value),
+    put: async (key, value, _opts) => store.set(key, value),
     delete: async (key) => store.delete(key),
     _store: store,
   }

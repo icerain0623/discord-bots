@@ -1,14 +1,13 @@
 import { describe, test, expect, beforeEach } from '@jest/globals'
 import { getGuildRoles, getGuildMembers } from '../src/utils/discordApi.js'
 
-let fetchMock
 beforeEach(() => {
-  fetchMock = null
+  globalThis.fetch = undefined
 })
 
 function mockFetch(responses) {
   let callIndex = 0
-  globalThis.fetch = async (url, opts) => {
+  globalThis.fetch = async (_url, _opts) => {
     const res = responses[callIndex++]
     return {
       ok: res.ok ?? true,
