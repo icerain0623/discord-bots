@@ -1,5 +1,7 @@
-import { describe, test, expect, beforeEach } from '@jest/globals'
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import { handleOrg } from '../src/commands/org.js'
+
+const originalFetch = globalThis.fetch
 
 function createMockKv() {
   const store = new Map()
@@ -7,6 +9,21 @@ function createMockKv() {
     get: async (key) => store.get(key) ?? null,
     put: async (key, value) => store.set(key, value),
     delete: async (key) => store.delete(key),
+  }
+}
+
+function mockFetchForDeferred() {
+  globalThis.fetch = async (url) => {
+    const isMembers = url.includes('/members')
+    const isRoles = url.includes('/roles')
+    const body = (isMembers || isRoles) ? [] : { id: 'mock_msg_id' }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+      headers: new Map([['x-ratelimit-remaining', '10']]),
+    }
   }
 }
 
@@ -31,6 +48,11 @@ describe('handleOrg', () => {
   beforeEach(() => {
     kv = createMockKv()
     env = { SESSION_KV: kv, DISCORD_TOKEN: 'test-token' }
+    mockFetchForDeferred()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
   })
 
   test('denies access without MANAGE_GUILD', async () => {
@@ -80,9 +102,11 @@ describe('handleOrg', () => {
     await kv.put('org:config:guild1', JSON.stringify({ departments: [] }))
     const interaction = buildInteraction('setup', { channel: 'ch_target' })
     interaction.data.options[0].options = [{ name: 'channel', value: 'ch_target', type: 7 }]
-    const ctx = { waitUntil: () => {} }
+    const promises = []
+    const ctx = { waitUntil: (p) => promises.push(p) }
     const result = await handleOrg(interaction, env, ctx)
     expect(result.type).toBe(5)
+    await Promise.all(promises)
   })
 
   test('setup deletes old panel before creating new one', async () => {
@@ -90,19 +114,22 @@ describe('handleOrg', () => {
     await kv.put('org:panel:guild1', JSON.stringify({ channelId: 'old_ch', messageId: 'old_msg' }))
     const interaction = buildInteraction('setup', { channel: 'ch_new' })
     interaction.data.options[0].options = [{ name: 'channel', value: 'ch_new', type: 7 }]
-    const waitUntilFn = []
-    const ctx = { waitUntil: (p) => waitUntilFn.push(p) }
+    const promises = []
+    const ctx = { waitUntil: (p) => promises.push(p) }
     const result = await handleOrg(interaction, env, ctx)
     expect(result.type).toBe(5)
-    expect(waitUntilFn.length).toBe(1)
+    expect(promises.length).toBe(1)
+    await Promise.all(promises)
   })
 
   test('refresh returns deferred response when config and panel exist', async () => {
     await kv.put('org:config:guild1', JSON.stringify({ departments: [] }))
     await kv.put('org:panel:guild1', JSON.stringify({ channelId: 'ch1', messageId: 'msg1' }))
     const interaction = buildInteraction('refresh')
-    const ctx = { waitUntil: () => {} }
+    const promises = []
+    const ctx = { waitUntil: (p) => promises.push(p) }
     const result = await handleOrg(interaction, env, ctx)
     expect(result.type).toBe(5)
+    await Promise.all(promises)
   })
 })
