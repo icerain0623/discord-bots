@@ -128,6 +128,44 @@ const commands = [
       sub.setName('config')
         .setDescription('部門定義を編集します')
     )
+    .addSubcommand(sub =>
+      sub.setName('debug')
+        .setDescription('組織図をメンションなしでプレビューします')
+    )
+    .addSubcommand(sub =>
+      sub.setName('dept-add')
+        .setDescription('部門を追加します')
+        .addStringOption(opt =>
+          opt.setName('name').setDescription('部門名').setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('dept-remove')
+        .setDescription('部門を削除します')
+        .addStringOption(opt =>
+          opt.setName('name').setDescription('部門名').setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('role-add')
+        .setDescription('部門にロールを追加します')
+        .addStringOption(opt =>
+          opt.setName('dept').setDescription('部門名').setRequired(true)
+        )
+        .addStringOption(opt =>
+          opt.setName('role').setDescription('ロール名').setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('role-remove')
+        .setDescription('部門からロールを削除します')
+        .addStringOption(opt =>
+          opt.setName('dept').setDescription('部門名').setRequired(true)
+        )
+        .addStringOption(opt =>
+          opt.setName('role').setDescription('ロール名').setRequired(true)
+        )
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
 ]

@@ -103,7 +103,6 @@ export async function handleModalSubmit(interaction, env) {
     await update(kv, userId, extractFields(interaction, ['reply_speed', 'kinoko_takenoko', 'taiyaki']))
     const updated = await get(kv, userId)
     if (!updated) return ephemeralMsg(SESSION_EXPIRED_MSG)
-    const userId = getUserId(interaction)
     const preview = formatIntro(getDisplayName(interaction), userId, updated.data)
     return ephemeralMsg(`**入力完了！** 以下の内容で投稿します。\n\n${preview}`, [confirmRow()])
   }
