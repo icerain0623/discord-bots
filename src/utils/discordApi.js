@@ -205,3 +205,39 @@ export async function sendFollowupMessage(applicationId, interactionToken, paylo
     console.error(`sendFollowupMessage failed (${res.status}):`, text)
   }
 }
+
+export async function getGuildRoles(guildId, token) {
+  const res = await discordFetch(`/guilds/${guildId}/roles`, token)
+  if (!res.ok) return []
+  return res.json()
+}
+
+export async function getGuildMembers(guildId, token) {
+  const allMembers = []
+  let after = '0'
+
+  for (;;) {
+    const params = new URLSearchParams({ limit: '1000', after })
+    const res = await discordFetch(`/guilds/${guildId}/members?${params}`, token)
+    if (!res.ok) return allMembers
+
+    const members = await res.json()
+    if (members.length === 0) break
+
+    allMembers.push(...members)
+    after = members[members.length - 1].user.id
+    if (members.length < 1000) break
+  }
+
+  return allMembers
+}
+
+export async function deleteMessage(channelId, messageId, token) {
+  const res = await discordFetch(`/channels/${channelId}/messages/${messageId}`, token, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    console.error(`deleteMessage failed (${res.status}):`, await res.text())
+  }
+  return res
+}
