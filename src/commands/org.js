@@ -131,12 +131,19 @@ async function doRefresh(kv, guildId, panel, applicationId, interactionToken, en
   const embeds = buildOrgEmbeds(config, guildRoles, guildMembers)
   const res = await editMessage(panel.channelId, panel.messageId, env.DISCORD_TOKEN, { embeds })
 
-  if (!res.ok && res.status === 404) {
-    await deleteOrgPanel(kv, guildId)
-    await sendFollowupMessage(applicationId, interactionToken, {
-      content: 'パネルが見つかりません。`/org setup` で再設置してください。',
-      flags: EPHEMERAL,
-    })
+  if (!res.ok) {
+    if (res.status === 404) {
+      await deleteOrgPanel(kv, guildId)
+      await sendFollowupMessage(applicationId, interactionToken, {
+        content: 'パネルが見つかりません。`/org setup` で再設置してください。',
+        flags: EPHEMERAL,
+      })
+    } else {
+      await sendFollowupMessage(applicationId, interactionToken, {
+        content: '組織図の更新に失敗しました。',
+        flags: EPHEMERAL,
+      })
+    }
     return
   }
 

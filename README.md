@@ -76,7 +76,13 @@ discord-bots/
     ├── weekUtils.test.js
     ├── contactStore.test.js
     ├── reportId.test.js
-    └── contactModals.test.js
+    ├── contactModals.test.js
+    ├── org.test.js
+    ├── orgStore.test.js
+    ├── orgFormatter.test.js
+    ├── orgConfigModal.test.js
+    ├── orgConfigHandler.test.js
+    └── discordApiOrg.test.js
 ```
 
 ## セットアップ
