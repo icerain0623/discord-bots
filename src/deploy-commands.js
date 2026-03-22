@@ -168,6 +168,63 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('relay')
+    .setDescription('1文リレーイベント機能')
+    .addSubcommand(sub =>
+      sub.setName('start')
+        .setDescription('リレーを開始します')
+        .addStringOption(opt =>
+          opt.setName('topic')
+            .setDescription('お題')
+            .setRequired(true)
+        )
+        .addStringOption(opt =>
+          opt.setName('first_sentence')
+            .setDescription('最初の一文')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('status')
+        .setDescription('リレーの進行状況を表示します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('delete')
+        .setDescription('指定番号の文を削除します')
+        .addIntegerOption(opt =>
+          opt.setName('number')
+            .setDescription('削除する文の番号')
+            .setRequired(true)
+            .setMinValue(1)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('end')
+        .setDescription('リレーを終了して全文を投稿します')
+        .addChannelOption(opt =>
+          opt.setName('channel')
+            .setDescription('投稿先チャンネル')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('reveal')
+        .setDescription('ネタバレ（執筆者一覧）を投稿します')
+        .addChannelOption(opt =>
+          opt.setName('channel')
+            .setDescription('投稿先チャンネル')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('cancel')
+        .setDescription('リレーを中止します（投稿なし）')
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)

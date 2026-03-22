@@ -1,6 +1,6 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
-const VERSION = '0.11.0'
+const VERSION = '0.12.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
@@ -9,6 +9,7 @@ const COMMANDS = [
   { name: 'matchup', desc: '交流マッチング（テスト機能）' },
   { name: 'contact', desc: '匿名コンタクト（テスト機能）' },
   { name: 'org', desc: '組織図管理' },
+  { name: 'relay', desc: '1文リレーイベント' },
 ]
 
 function formatJST(isoString) {
