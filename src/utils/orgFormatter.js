@@ -16,17 +16,42 @@ function formatMember(userId, userNameMap, debug) {
   return `<@${userId}>`
 }
 
+const LINE_LIMIT = 1600
+
+function formatRoleLines(roleName, members, userNameMap, debug) {
+  if (members.length === 0) return [`${roleName}：（空席）`]
+  const prefix = `${roleName}：`
+  const contPrefix = '　　'
+  const lines = []
+  let currentNames = []
+  let currentLen = prefix.length
+
+  for (const m of members) {
+    const name = formatMember(m, userNameMap, debug)
+    const addition = currentNames.length === 0 ? name.length : name.length + 2
+    if (currentLen + addition > LINE_LIMIT && currentNames.length > 0) {
+      const p = lines.length === 0 ? prefix : contPrefix
+      lines.push(`${p}${currentNames.join(', ')}`)
+      currentNames = [name]
+      currentLen = contPrefix.length + name.length
+    } else {
+      currentNames.push(name)
+      currentLen += addition
+    }
+  }
+  if (currentNames.length > 0) {
+    const p = lines.length === 0 ? prefix : contPrefix
+    lines.push(`${p}${currentNames.join(', ')}`)
+  }
+  return lines
+}
+
 function buildDepartmentSection(dept, roleNameToId, membersByRoleId, userNameMap, debug) {
   const lines = [`【${dept.name}】`]
   for (const roleName of dept.roles) {
     const roleId = roleNameToId.get(roleName)
     const members = roleId ? (membersByRoleId.get(roleId) || []) : []
-    if (members.length === 0) {
-      lines.push(`${roleName}：（空席）`)
-    } else {
-      const names = members.map(m => formatMember(m, userNameMap, debug)).join(', ')
-      lines.push(`${roleName}：${names}`)
-    }
+    lines.push(...formatRoleLines(roleName, members, userNameMap, debug))
   }
   return lines.join('\n')
 }
@@ -73,15 +98,14 @@ export function buildOrgMessages(config, guildRoles, guildMembers, { debug = fal
     if (role.name === '@everyone') continue
     const members = membersByRoleId.get(role.id) || []
     if (members.length === 0) continue
-    const names = members.map(m => formatMember(m, userNameMap, debug)).join(', ')
-    unassignedLines.push(`${role.name}：${names}`)
+    unassignedLines.push(...formatRoleLines(role.name, members, userNameMap, debug))
   }
 
   // Also find members with no roles at all
   const noRoleMembers = guildMembers.filter(m => m.roles.length === 0)
   if (noRoleMembers.length > 0) {
-    const names = noRoleMembers.map(m => formatMember(m.user.id, userNameMap, debug)).join(', ')
-    unassignedLines.push(`ロールなし：${names}`)
+    const memberIds = noRoleMembers.map(m => m.user.id)
+    unassignedLines.push(...formatRoleLines('ロールなし', memberIds, userNameMap, debug))
   }
 
   if (unassignedLines.length > 0) {
