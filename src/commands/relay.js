@@ -31,9 +31,10 @@ export async function handleRelay(interaction, env, ctx) {
   if (sub === 'start') return handleStart(kv, guildId, options, interaction, env, ctx)
   if (sub === 'status') return handleStatus(kv, guildId)
   if (sub === 'delete') return handleDelete(kv, guildId, options)
-  if (sub === 'end') return handleEnd(kv, guildId, options, interaction, env, ctx)
+  if (sub === 'end') return handleEnd(kv, guildId, interaction, env, ctx)
+  if (sub === 'post') return handlePost(kv, guildId, options, interaction, env, ctx)
   if (sub === 'reveal') return handleReveal(kv, guildId, options, interaction, env, ctx)
-  if (sub === 'cancel') return handleCancel(kv, guildId, interaction, env, ctx)
+  if (sub === 'terminate') return handleTerminate(kv, guildId, interaction, env, ctx)
 
   return ephemeralMsg('不明なサブコマンドです。')
 }
@@ -41,7 +42,7 @@ export async function handleRelay(interaction, env, ctx) {
 async function handleStart(kv, guildId, options, interaction, env, ctx) {
   const existing = await getRelay(kv, guildId)
   if (existing) {
-    return ephemeralMsg('既にリレーが進行中です。先に `/relay cancel` で中止してください。')
+    return ephemeralMsg('既にリレーが進行中です。先に `/relay terminate` で終了してください。')
   }
 
   const topic = options.topic
@@ -125,7 +126,34 @@ async function handleDelete(kv, guildId, options) {
   return ephemeralMsg(`${num}番目の文を削除しました（残り${relay.sentences.length}文）`)
 }
 
-async function handleEnd(kv, guildId, options, interaction, env, ctx) {
+async function handleEnd(kv, guildId, interaction, env, ctx) {
+  const relay = await getRelay(kv, guildId)
+  if (!relay) return ephemeralMsg('リレーは開催されていません。')
+
+  const applicationId = interaction.application_id
+  const interactionToken = interaction.token
+
+  if (ctx) {
+    ctx.waitUntil(doEnd(kv, guildId, relay, applicationId, interactionToken, env))
+  }
+  return { type: 5, data: { flags: EPHEMERAL } }
+}
+
+async function doEnd(kv, guildId, relay, applicationId, interactionToken, env) {
+  const { editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
+
+  await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
+    content: `**📝 1文リレー終了**\nお題：**${relay.topic}**\n\n全${relay.sentences.length}文で完成しました！`,
+    components: [],
+  })
+
+  await sendFollowupMessage(applicationId, interactionToken, {
+    content: '✅ リレーを終了しました。追記はできなくなりました。',
+    flags: EPHEMERAL,
+  })
+}
+
+async function handlePost(kv, guildId, options, interaction, env, ctx) {
   const relay = await getRelay(kv, guildId)
   if (!relay) return ephemeralMsg('リレーは開催されていません。')
 
@@ -134,13 +162,13 @@ async function handleEnd(kv, guildId, options, interaction, env, ctx) {
   const interactionToken = interaction.token
 
   if (ctx) {
-    ctx.waitUntil(doEnd(kv, guildId, relay, targetChannelId, applicationId, interactionToken, env))
+    ctx.waitUntil(doPost(relay, targetChannelId, applicationId, interactionToken, env))
   }
   return { type: 5, data: { flags: EPHEMERAL } }
 }
 
-async function doEnd(kv, guildId, relay, targetChannelId, applicationId, interactionToken, env) {
-  const { postMessage, editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
+async function doPost(relay, targetChannelId, applicationId, interactionToken, env) {
+  const { postMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
 
   const fullText = relay.sentences.map(s => s.text).join('')
   const header = `**お題：${relay.topic}**\n\n`
@@ -160,11 +188,6 @@ async function doEnd(kv, guildId, relay, targetChannelId, applicationId, interac
     return
   }
 
-  await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
-    content: `**📝 1文リレー終了**\nお題：**${relay.topic}**\n\n全${relay.sentences.length}文で完成しました！`,
-    components: [],
-  })
-
   await sendFollowupMessage(applicationId, interactionToken, {
     content: '✅ 全文を投稿しました！',
     flags: EPHEMERAL,
@@ -180,12 +203,12 @@ async function handleReveal(kv, guildId, options, interaction, env, ctx) {
   const interactionToken = interaction.token
 
   if (ctx) {
-    ctx.waitUntil(doReveal(kv, guildId, relay, targetChannelId, applicationId, interactionToken, env))
+    ctx.waitUntil(doReveal(relay, targetChannelId, applicationId, interactionToken, env))
   }
   return { type: 5, data: { flags: EPHEMERAL } }
 }
 
-async function doReveal(kv, guildId, relay, targetChannelId, applicationId, interactionToken, env) {
+async function doReveal(relay, targetChannelId, applicationId, interactionToken, env) {
   const { postMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
 
   const lines = relay.sentences.map((s, i) => `${i + 1}. ${s.text} — ${s.displayName}`)
@@ -206,15 +229,13 @@ async function doReveal(kv, guildId, relay, targetChannelId, applicationId, inte
     return
   }
 
-  await deleteRelay(kv, guildId)
-
   await sendFollowupMessage(applicationId, interactionToken, {
-    content: '✅ ネタバレを投稿しました。リレーデータを削除しました。',
+    content: '✅ ネタバレを投稿しました。',
     flags: EPHEMERAL,
   })
 }
 
-async function handleCancel(kv, guildId, interaction, env, ctx) {
+async function handleTerminate(kv, guildId, interaction, env, ctx) {
   const relay = await getRelay(kv, guildId)
   if (!relay) return ephemeralMsg('リレーは開催されていません。')
 
@@ -222,23 +243,23 @@ async function handleCancel(kv, guildId, interaction, env, ctx) {
   const interactionToken = interaction.token
 
   if (ctx) {
-    ctx.waitUntil(doCancel(kv, guildId, relay, applicationId, interactionToken, env))
+    ctx.waitUntil(doTerminate(kv, guildId, relay, applicationId, interactionToken, env))
   }
   return { type: 5, data: { flags: EPHEMERAL } }
 }
 
-async function doCancel(kv, guildId, relay, applicationId, interactionToken, env) {
+async function doTerminate(kv, guildId, relay, applicationId, interactionToken, env) {
   const { editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
 
   await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
-    content: `**📝 1文リレー中止**\nお題：**${relay.topic}**`,
+    content: `**📝 1文リレー終了**\nお題：**${relay.topic}**\n\nデータは削除されました。`,
     components: [],
   })
 
   await deleteRelay(kv, guildId)
 
   await sendFollowupMessage(applicationId, interactionToken, {
-    content: '✅ リレーを中止しました。',
+    content: '✅ リレーデータを削除しました。',
     flags: EPHEMERAL,
   })
 }
