@@ -201,7 +201,11 @@ const commands = [
     )
     .addSubcommand(sub =>
       sub.setName('end')
-        .setDescription('リレーを終了して全文を投稿します')
+        .setDescription('リレーを終了します（追記不可、データは残ります）')
+    )
+    .addSubcommand(sub =>
+      sub.setName('post')
+        .setDescription('全文を匿名で投稿します（データは残ります）')
         .addChannelOption(opt =>
           opt.setName('channel')
             .setDescription('投稿先チャンネル')
@@ -211,7 +215,7 @@ const commands = [
     )
     .addSubcommand(sub =>
       sub.setName('reveal')
-        .setDescription('ネタバレ（執筆者一覧）を投稿します')
+        .setDescription('ネタバレ（執筆者一覧）を投稿します（データは残ります）')
         .addChannelOption(opt =>
           opt.setName('channel')
             .setDescription('投稿先チャンネル')
@@ -220,8 +224,8 @@ const commands = [
         )
     )
     .addSubcommand(sub =>
-      sub.setName('cancel')
-        .setDescription('リレーを中止します（投稿なし）')
+      sub.setName('terminate')
+        .setDescription('リレーデータを削除します')
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),

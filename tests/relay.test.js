@@ -143,11 +143,11 @@ describe('relay delete', () => {
 
 describe('relay end', () => {
   test('rejects when no relay active', async () => {
-    const result = await handleRelay(makeInteraction('end', { channel: 'ch-out' }), { SESSION_KV: createMockKV() })
+    const result = await handleRelay(makeInteraction('end'), { SESSION_KV: createMockKV() })
     expect(result.data.content).toContain('開催されていません')
   })
 
-  test('posts full text and disables button', async () => {
+  test('disables button and keeps data', async () => {
     mockFetch()
     const kv = createMockKV()
     await kv.put('relay-active:g123', JSON.stringify({
@@ -162,17 +162,9 @@ describe('relay end', () => {
     const env = { SESSION_KV: kv, DISCORD_TOKEN: 'test-tok' }
     let bgPromise
     const ctx = { waitUntil: (p) => { bgPromise = p } }
-    const result = await handleRelay(makeInteraction('end', { channel: 'ch-out' }), env, ctx)
+    const result = await handleRelay(makeInteraction('end'), env, ctx)
     expect(result.type).toBe(5)
     await bgPromise
-
-    const postCalls = fetchCalls.filter(c =>
-      c.url.includes('/channels/ch-out/messages') && c.options?.method === 'POST'
-    )
-    expect(postCalls.length).toBeGreaterThanOrEqual(1)
-    const body = JSON.parse(postCalls[0].options.body)
-    expect(body.content).toContain('一文目')
-    expect(body.content).toContain('二文目')
 
     const editCalls = fetchCalls.filter(c =>
       c.url.includes('/channels/ch1/messages/msg-panel') && c.options?.method === 'PATCH'
@@ -185,8 +177,40 @@ describe('relay end', () => {
   })
 })
 
+describe('relay post', () => {
+  test('posts full text anonymously and keeps data', async () => {
+    mockFetch()
+    const kv = createMockKV()
+    await kv.put('relay-active:g123', JSON.stringify({
+      topic: 'お題',
+      channelId: 'ch1',
+      messageId: 'msg-panel',
+      sentences: [
+        { text: '一文目', userId: 'u1', displayName: 'A' },
+        { text: '二文目', userId: 'u2', displayName: 'B' },
+      ],
+    }))
+    const env = { SESSION_KV: kv, DISCORD_TOKEN: 'test-tok' }
+    let bgPromise
+    const ctx = { waitUntil: (p) => { bgPromise = p } }
+    const result = await handleRelay(makeInteraction('post', { channel: 'ch-out' }), env, ctx)
+    expect(result.type).toBe(5)
+    await bgPromise
+
+    const postCalls = fetchCalls.filter(c =>
+      c.url.includes('/channels/ch-out/messages') && c.options?.method === 'POST'
+    )
+    expect(postCalls.length).toBeGreaterThanOrEqual(1)
+    const body = JSON.parse(postCalls[0].options.body)
+    expect(body.content).toContain('一文目')
+    expect(body.content).toContain('二文目')
+
+    expect(await kv.get('relay-active:g123')).not.toBeNull()
+  })
+})
+
 describe('relay reveal', () => {
-  test('posts spoiler and deletes KV', async () => {
+  test('posts spoiler and keeps data', async () => {
     mockFetch()
     const kv = createMockKV()
     await kv.put('relay-active:g123', JSON.stringify({
@@ -213,11 +237,11 @@ describe('relay reveal', () => {
     expect(body.content).toContain('A')
     expect(body.content).toContain('B')
 
-    expect(await kv.get('relay-active:g123')).toBeNull()
+    expect(await kv.get('relay-active:g123')).not.toBeNull()
   })
 })
 
-describe('relay cancel', () => {
+describe('relay terminate', () => {
   test('edits panel and deletes KV', async () => {
     mockFetch()
     const kv = createMockKV()
@@ -230,7 +254,7 @@ describe('relay cancel', () => {
     const env = { SESSION_KV: kv, DISCORD_TOKEN: 'test-tok' }
     let bgPromise
     const ctx = { waitUntil: (p) => { bgPromise = p } }
-    const result = await handleRelay(makeInteraction('cancel'), env, ctx)
+    const result = await handleRelay(makeInteraction('terminate'), env, ctx)
     expect(result.type).toBe(5)
     await bgPromise
 
