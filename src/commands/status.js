@@ -9,6 +9,7 @@ const COMMANDS = [
   { name: 'matchup', desc: '交流マッチング（テスト機能）' },
   { name: 'contact', desc: '匿名コンタクト（テスト機能）' },
   { name: 'org', desc: '組織図管理' },
+  { name: 'relay', desc: '1文リレーイベント' },
 ]
 
 function formatJST(isoString) {
