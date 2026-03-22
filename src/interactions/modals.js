@@ -73,6 +73,11 @@ export async function handleModalSubmit(interaction, env) {
     return handleOrgConfigModal(interaction, env)
   }
 
+  // Route relay modal
+  if (customId === 'relay_modal') {
+    return handleRelayModal(interaction, env, userId)
+  }
+
   const kv = env.SESSION_KV
   const session = await get(kv, userId)
   if (!session) return ephemeralMsg(SESSION_EXPIRED_MSG)
@@ -152,4 +157,42 @@ async function handleMatchupFreeTopics(interaction, env, userId) {
   const allTopics = [...pending.topics, ...freeTopics.map(t => `「${t}」`)]
   const topicDisplay = allTopics.length > 0 ? allTopics.join(', ') : 'なし'
   return ephemeralMsg(`✅ 参加登録しました！ トピック: ${topicDisplay}`)
+}
+
+async function handleRelayModal(interaction, env, userId) {
+  const { getRelay, saveRelay } = await import('../utils/relayStore.js')
+  const { editMessage } = await import('../utils/discordApi.js')
+
+  const guildId = interaction.guild_id
+  const relay = await getRelay(env.SESSION_KV, guildId)
+  if (!relay) return ephemeralMsg('リレーは開催されていません。')
+
+  const lastSentence = relay.sentences[relay.sentences.length - 1]
+  if (lastSentence && lastSentence.userId === userId) {
+    return ephemeralMsg('連続で投稿することはできません。他の人の投稿を待ってください。')
+  }
+
+  const sentence = extractFields(interaction, ['relay_sentence']).relay_sentence
+  if (!sentence) return ephemeralMsg('文が空です。')
+
+  const displayName = getDisplayName(interaction)
+  relay.sentences.push({ text: sentence, userId, displayName })
+  await saveRelay(env.SESSION_KV, guildId, relay)
+
+  const count = relay.sentences.length
+
+  editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
+    content: `**📝 1文リレー開催中！**\nお題：**${relay.topic}**\n\n現在 ${count} 文目`,
+    components: [{
+      type: 1,
+      components: [{
+        type: 2,
+        custom_id: 'relay_add',
+        label: '一文を追加する ✏️',
+        style: 1,
+      }],
+    }],
+  }).catch(err => console.error('relay panel update failed:', err))
+
+  return ephemeralMsg(`✅ 追加しました！（${count}文目）`)
 }

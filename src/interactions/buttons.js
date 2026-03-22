@@ -267,5 +267,23 @@ export async function handleButton(interaction, env) {
     return showModal(buildFollowupModal(reportId))
   }
 
+  // --- Relay handlers ---
+  if (customId === 'relay_add') {
+    const { getRelay } = await import('../utils/relayStore.js')
+    const { buildRelayModal } = await import('../modals/relayModal.js')
+    const guildId = interaction.guild_id
+
+    const relay = await getRelay(kv, guildId)
+    if (!relay) return ephemeralMsg('リレーは開催されていません。')
+
+    const lastSentence = relay.sentences[relay.sentences.length - 1]
+    if (lastSentence && lastSentence.userId === userId) {
+      return ephemeralMsg('連続で投稿することはできません。他の人の投稿を待ってください。')
+    }
+
+    const prevText = lastSentence?.text || '（まだ一文もありません）'
+    return showModal(buildRelayModal(prevText))
+  }
+
   return ephemeralMsg('不明なインタラクションです。')
 }
