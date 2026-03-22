@@ -92,6 +92,21 @@ describe('buildOrgMessages', () => {
     expect(text).toContain('デバッグモード')
   })
 
+  test('splits long member lists across multiple lines', () => {
+    // Create a role with 200+ members to exceed MESSAGE_LIMIT in a single line
+    const manyMembers = Array.from({ length: 250 }, (_, i) => ({
+      user: { id: `u${i}`, username: `user${i}` },
+      roles: ['r1'],
+    }))
+    const messages = buildOrgMessages(config, guildRoles, manyMembers)
+    for (const msg of messages) {
+      expect(msg.length).toBeLessThanOrEqual(1800)
+    }
+    // Should still contain the role name
+    const text = messages.join('\n')
+    expect(text).toContain('幹事長')
+  })
+
   test('shows unassigned roles in 未分類 section', () => {
     const rolesWithExtra = [
       ...guildRoles,
