@@ -84,7 +84,7 @@ describe('relay_add button', () => {
 })
 
 describe('relay_modal submit', () => {
-  test('adds sentence and returns success', async () => {
+  test('returns deferred and saves sentence in background', async () => {
     mockFetch()
     const kv = createMockKV()
     await kv.put('relay-active:g123', JSON.stringify({
@@ -94,8 +94,11 @@ describe('relay_modal submit', () => {
       sentences: [{ text: '前の文', userId: 'u-other', displayName: 'Other' }],
     }))
     const env = { SESSION_KV: kv, DISCORD_TOKEN: 'test-tok' }
-    const result = await handleModalSubmit(makeModalInteraction('新しい文'), env)
-    expect(result.data.content).toContain('追加しました')
+    let bgPromise
+    const ctx = { waitUntil: (p) => { bgPromise = p } }
+    const result = await handleModalSubmit(makeModalInteraction('新しい文'), env, ctx)
+    expect(result.type).toBe(5)
+    await bgPromise
 
     const relay = JSON.parse(await kv.get('relay-active:g123'))
     expect(relay.sentences).toHaveLength(2)

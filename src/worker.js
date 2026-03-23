@@ -88,7 +88,7 @@ export default {
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
-        result = await handleModalSubmit(interaction, env)
+        result = await handleModalSubmit(interaction, env, ctx)
       } else {
         return new Response('Unknown interaction', { status: 400 })
       }

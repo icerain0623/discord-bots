@@ -4,9 +4,13 @@
  */
 export function buildRelayModal(previousSentence) {
   const maxTitleLen = 45
-  let title = previousSentence || '最初の一文に続けてください'
-  if (title.length > maxTitleLen) {
-    title = title.slice(0, maxTitleLen - 1) + '…'
+  // タイトルに使えない文字（改行等）を除去し、長さを制限する
+  let title = (previousSentence || '最初の一文に続けてください')
+    .replace(/[\n\r]+/g, ' ')
+    .trim()
+  if (!title) title = '最初の一文に続けてください'
+  if ([...title].length > maxTitleLen) {
+    title = [...title].slice(0, maxTitleLen - 1).join('') + '…'
   }
 
   return {
