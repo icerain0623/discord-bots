@@ -160,54 +160,70 @@ async function handleMatchupFreeTopics(interaction, env, userId) {
 }
 
 async function handleRelayModal(interaction, env, userId, ctx) {
-  const { getRelay } = await import('../utils/relayStore.js')
-
-  const guildId = interaction.guild_id
-  const relay = await getRelay(env.SESSION_KV, guildId)
-  if (!relay) return ephemeralMsg('リレーは開催されていません。')
-
-  const lastSentence = relay.sentences[relay.sentences.length - 1]
-  if (lastSentence && lastSentence.userId === userId) {
-    return ephemeralMsg('連続で投稿することはできません。他の人の投稿を待ってください。')
-  }
-
   const sentence = extractFields(interaction, ['relay_sentence']).relay_sentence
   if (!sentence) return ephemeralMsg('文が空です。')
 
+  const guildId = interaction.guild_id
   const displayName = getDisplayName(interaction)
   const applicationId = interaction.application_id
   const interactionToken = interaction.token
 
   if (ctx) {
-    ctx.waitUntil(doRelayModalSubmit(env, guildId, relay, sentence, userId, displayName, applicationId, interactionToken))
+    ctx.waitUntil(doRelayModalSubmit(env, guildId, sentence, userId, displayName, applicationId, interactionToken))
   }
   return { type: 5, data: { flags: 64 } }
 }
 
-async function doRelayModalSubmit(env, guildId, relay, sentence, userId, displayName, applicationId, interactionToken) {
-  const { saveRelay } = await import('../utils/relayStore.js')
+async function doRelayModalSubmit(env, guildId, sentence, userId, displayName, applicationId, interactionToken) {
+  const { getRelay, saveRelay } = await import('../utils/relayStore.js')
   const { editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
 
-  relay.sentences.push({ text: sentence, userId, displayName })
-  await saveRelay(env.SESSION_KV, guildId, relay)
+  try {
+    const relay = await getRelay(env.SESSION_KV, guildId)
+    if (!relay) {
+      await sendFollowupMessage(applicationId, interactionToken, {
+        content: 'リレーは開催されていません。',
+        flags: 64,
+      })
+      return
+    }
 
-  const count = relay.sentences.length
+    const lastSentence = relay.sentences[relay.sentences.length - 1]
+    if (lastSentence && lastSentence.userId === userId) {
+      await sendFollowupMessage(applicationId, interactionToken, {
+        content: '連続で投稿することはできません。他の人の投稿を待ってください。',
+        flags: 64,
+      })
+      return
+    }
 
-  await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
-    content: `**📝 1文リレー開催中！**\nお題：**${relay.topic}**\n\n現在 ${count} 文目`,
-    components: [{
-      type: 1,
+    relay.sentences.push({ text: sentence, userId, displayName })
+    await saveRelay(env.SESSION_KV, guildId, relay)
+
+    const count = relay.sentences.length
+
+    await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
+      content: `**📝 1文リレー開催中！**\nお題：**${relay.topic}**\n\n現在 ${count} 文目`,
       components: [{
-        type: 2,
-        custom_id: 'relay_add',
-        label: '一文を追加する ✏️',
-        style: 1,
+        type: 1,
+        components: [{
+          type: 2,
+          custom_id: 'relay_add',
+          label: '一文を追加する ✏️',
+          style: 1,
+        }],
       }],
-    }],
-  })
+    })
 
-  await sendFollowupMessage(applicationId, interactionToken, {
-    content: `✅ 追加しました！（${count}文目）`,
-    flags: 64,
-  })
+    await sendFollowupMessage(applicationId, interactionToken, {
+      content: `✅ 追加しました！（${count}文目）`,
+      flags: 64,
+    })
+  } catch (err) {
+    console.error('doRelayModalSubmit error:', err)
+    await sendFollowupMessage(applicationId, interactionToken, {
+      content: 'エラーが発生しました。もう一度お試しください。',
+      flags: 64,
+    })
+  }
 }
