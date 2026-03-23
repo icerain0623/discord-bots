@@ -1,3 +1,4 @@
+import { describe, test, expect, afterEach } from '@jest/globals'
 import { handleButton } from '../src/interactions/buttons.js'
 import { handleModalSubmit } from '../src/interactions/modals.js'
 
@@ -86,7 +87,7 @@ describe('relay_add button', () => {
     expect(result.data.components[0].components[0].custom_id).toBe('relay_prev')
     expect(result.data.components[0].components[0].value).toBe('前の一文です')
     expect(result.data.components[1].components[0].custom_id).toBe('relay_sentence')
-    expect(result.data.components[1].components[0].max_length).toBe(500)
+    expect(result.data.components[1].components[0].max_length).toBe(140)
   })
 })
 

@@ -29,7 +29,7 @@ export function buildRelayModal(previousSentence) {
       label: 'あなたの一文を入力してください',
       style: 2,
       required: true,
-      max_length: 500,
+      max_length: 140,
       placeholder: '一文を入力…',
     }],
   })
