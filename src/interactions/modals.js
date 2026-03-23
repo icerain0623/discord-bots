@@ -54,7 +54,7 @@ function extractFields(interaction, keys) {
   return fields
 }
 
-export async function handleModalSubmit(interaction, env) {
+export async function handleModalSubmit(interaction, env, ctx) {
   const userId = getUserId(interaction)
   const customId = interaction.data.custom_id
 
@@ -75,7 +75,7 @@ export async function handleModalSubmit(interaction, env) {
 
   // Route relay modal
   if (customId === 'relay_modal') {
-    return handleRelayModal(interaction, env, userId)
+    return handleRelayModal(interaction, env, userId, ctx)
   }
 
   const kv = env.SESSION_KV
@@ -159,9 +159,8 @@ async function handleMatchupFreeTopics(interaction, env, userId) {
   return ephemeralMsg(`✅ 参加登録しました！ トピック: ${topicDisplay}`)
 }
 
-async function handleRelayModal(interaction, env, userId) {
-  const { getRelay, saveRelay } = await import('../utils/relayStore.js')
-  const { editMessage } = await import('../utils/discordApi.js')
+async function handleRelayModal(interaction, env, userId, ctx) {
+  const { getRelay } = await import('../utils/relayStore.js')
 
   const guildId = interaction.guild_id
   const relay = await getRelay(env.SESSION_KV, guildId)
@@ -176,12 +175,25 @@ async function handleRelayModal(interaction, env, userId) {
   if (!sentence) return ephemeralMsg('文が空です。')
 
   const displayName = getDisplayName(interaction)
+  const applicationId = interaction.application_id
+  const interactionToken = interaction.token
+
+  if (ctx) {
+    ctx.waitUntil(doRelayModalSubmit(env, guildId, relay, sentence, userId, displayName, applicationId, interactionToken))
+  }
+  return { type: 5, data: { flags: 64 } }
+}
+
+async function doRelayModalSubmit(env, guildId, relay, sentence, userId, displayName, applicationId, interactionToken) {
+  const { saveRelay } = await import('../utils/relayStore.js')
+  const { editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
+
   relay.sentences.push({ text: sentence, userId, displayName })
   await saveRelay(env.SESSION_KV, guildId, relay)
 
   const count = relay.sentences.length
 
-  editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
+  await editMessage(relay.channelId, relay.messageId, env.DISCORD_TOKEN, {
     content: `**📝 1文リレー開催中！**\nお題：**${relay.topic}**\n\n現在 ${count} 文目`,
     components: [{
       type: 1,
@@ -192,7 +204,10 @@ async function handleRelayModal(interaction, env, userId) {
         style: 1,
       }],
     }],
-  }).catch(err => console.error('relay panel update failed:', err))
+  })
 
-  return ephemeralMsg(`✅ 追加しました！（${count}文目）`)
+  await sendFollowupMessage(applicationId, interactionToken, {
+    content: `✅ 追加しました！（${count}文目）`,
+    flags: 64,
+  })
 }
