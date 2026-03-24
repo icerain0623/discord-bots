@@ -229,6 +229,28 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('celebration-setup')
+    .setDescription('お祝い保存機能を設定します')
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('アーカイブ先チャンネル')
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true)
+    )
+    .addRoleOption(option =>
+      option
+        .setName('role')
+        .setDescription('操作を許可するロール')
+        .setRequired(true)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .toJSON(),
+  new ContextMenuCommandBuilder()
+    .setName('お祝い保存')
+    .setType(ApplicationCommandType.Message)
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)
