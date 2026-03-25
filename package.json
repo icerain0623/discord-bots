@@ -1,6 +1,6 @@
 {
   "name": "discord-bots",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "description": "Discord bot with multiple features",
   "type": "module",
   "scripts": {

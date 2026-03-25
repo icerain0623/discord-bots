@@ -14,6 +14,7 @@
 | 検閲（ジョーク） | メッセージを1984風に検閲するコンテキストメニュー | ✅ 稼働中 | — |
 | 組織図自動編成 | Discordロールから組織図を自動構成しEmbed表示 | 🧪 テスト機能 | — |
 | 1文リレー | イベント用1文リレー機能（匿名全文投稿＋ネタバレ） | 🧪 テスト機能 | — |
+| お祝い保存 | メッセージを専用チャンネルにアーカイブ（コンテキストメニュー） | 🧪 テスト機能 | — |
 
 ---
 
@@ -40,7 +41,9 @@ discord-bots/
 │   │   ├── censor.js              # 検閲コンテキストメニューコマンド
 │   │   ├── censorSettings.js      # /censor-settings コマンド
 │   │   ├── org.js                 # /org コマンド（組織図管理）
-│   │   └── relay.js               # /relay コマンド（1文リレー）
+│   │   ├── relay.js               # /relay コマンド（1文リレー）
+│   │   ├── celebrationSetup.js   # /celebration-setup コマンド
+│   │   └── celebrationSave.js    # お祝い保存コンテキストメニュー
 │   ├── interactions/
 │   │   ├── buttons.js             # ボタン操作ハンドラー
 │   │   ├── modals.js              # モーダル送信ハンドラー
