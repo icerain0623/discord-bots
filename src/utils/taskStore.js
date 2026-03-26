@@ -12,7 +12,12 @@ export async function saveTasks(kv, guildId, data) {
 
 export async function getTaskConfig(kv, guildId) {
   const raw = await kv.get(configKey(guildId))
-  return raw ? JSON.parse(raw) : { allowedUsers: [] }
+  const config = raw ? JSON.parse(raw) : { allowedRoles: [] }
+  if (!config.allowedRoles) {
+    config.allowedRoles = []
+    delete config.allowedUsers
+  }
+  return config
 }
 
 export async function saveTaskConfig(kv, guildId, config) {

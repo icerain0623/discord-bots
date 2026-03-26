@@ -29,23 +29,23 @@ export async function handleTask(interaction, env) {
   if (sub === 'list') return handleList(kv, guildId)
   if (sub === 'complete') return handleComplete(kv, guildId, options, interaction)
   if (sub === 'delete') return handleDelete(kv, guildId, options, interaction)
-  if (sub === 'allow-user') return handleAllowUser(kv, guildId, options, interaction)
-  if (sub === 'remove-user') return handleRemoveUser(kv, guildId, options, interaction)
-  if (sub === 'allowed-users') return handleAllowedUsers(kv, guildId, interaction)
+  if (sub === 'allow-role') return handleAllowRole(kv, guildId, options, interaction)
+  if (sub === 'remove-role') return handleRemoveRole(kv, guildId, options, interaction)
+  if (sub === 'allowed-roles') return handleAllowedRoles(kv, guildId, interaction)
 
   return ephemeralMsg('不明なサブコマンドです。')
 }
 
 async function canAddTask(interaction, kv, guildId) {
   if (hasManageMessages(interaction)) return true
-  const userId = getUserId(interaction)
+  const memberRoles = interaction.member?.roles ?? []
   const config = await getTaskConfig(kv, guildId)
-  return config.allowedUsers.includes(userId)
+  return config.allowedRoles.some(roleId => memberRoles.includes(roleId))
 }
 
 async function handleAdd(kv, guildId, options, interaction) {
   if (!(await canAddTask(interaction, kv, guildId))) {
-    return permissionDeniedResponse('メッセージの管理（または許可ユーザー）')
+    return permissionDeniedResponse('メッセージの管理（または許可ロール）')
   }
 
   const name = options.name
@@ -138,49 +138,49 @@ async function handleDelete(kv, guildId, options, interaction) {
   return ephemeralMsg(`🗑️ タスク #${options.id} を削除しました。`)
 }
 
-async function handleAllowUser(kv, guildId, options, interaction) {
+async function handleAllowRole(kv, guildId, options, interaction) {
   if (!hasManageGuild(interaction)) {
     return permissionDeniedResponse('サーバーの管理')
   }
 
-  const userId = options.user
+  const roleId = options.role
   const config = await getTaskConfig(kv, guildId)
-  if (config.allowedUsers.includes(userId)) {
-    return ephemeralMsg(`<@${userId}> は既に登録されています。`)
+  if (config.allowedRoles.includes(roleId)) {
+    return ephemeralMsg(`<@&${roleId}> は既に登録されています。`)
   }
 
-  config.allowedUsers.push(userId)
+  config.allowedRoles.push(roleId)
   await saveTaskConfig(kv, guildId, config)
-  return ephemeralMsg(`✅ <@${userId}> にタスク追加を許可しました。`)
+  return ephemeralMsg(`✅ <@&${roleId}> にタスク追加を許可しました。`)
 }
 
-async function handleRemoveUser(kv, guildId, options, interaction) {
+async function handleRemoveRole(kv, guildId, options, interaction) {
   if (!hasManageGuild(interaction)) {
     return permissionDeniedResponse('サーバーの管理')
   }
 
-  const userId = options.user
+  const roleId = options.role
   const config = await getTaskConfig(kv, guildId)
-  const idx = config.allowedUsers.indexOf(userId)
+  const idx = config.allowedRoles.indexOf(roleId)
   if (idx === -1) {
-    return ephemeralMsg(`<@${userId}> は登録されていません。`)
+    return ephemeralMsg(`<@&${roleId}> は登録されていません。`)
   }
 
-  config.allowedUsers.splice(idx, 1)
+  config.allowedRoles.splice(idx, 1)
   await saveTaskConfig(kv, guildId, config)
-  return ephemeralMsg(`✅ <@${userId}> の許可を取り消しました。`)
+  return ephemeralMsg(`✅ <@&${roleId}> の許可を取り消しました。`)
 }
 
-async function handleAllowedUsers(kv, guildId, interaction) {
+async function handleAllowedRoles(kv, guildId, interaction) {
   if (!hasManageGuild(interaction)) {
     return permissionDeniedResponse('サーバーの管理')
   }
 
   const config = await getTaskConfig(kv, guildId)
-  if (config.allowedUsers.length === 0) {
-    return ephemeralMsg('許可ユーザーはいません。')
+  if (config.allowedRoles.length === 0) {
+    return ephemeralMsg('許可ロールはありません。')
   }
 
-  const list = config.allowedUsers.map(id => `・<@${id}>`).join('\n')
-  return ephemeralMsg(`📋 タスク追加許可ユーザー\n${list}`)
+  const list = config.allowedRoles.map(id => `・<@&${id}>`).join('\n')
+  return ephemeralMsg(`📋 タスク追加許可ロール\n${list}`)
 }

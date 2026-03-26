@@ -293,22 +293,22 @@ const commands = [
         )
     )
     .addSubcommand(sub =>
-      sub.setName('allow-user')
-        .setDescription('ユーザーにタスク追加を許可します')
-        .addUserOption(opt =>
-          opt.setName('user').setDescription('対象ユーザー').setRequired(true)
+      sub.setName('allow-role')
+        .setDescription('ロールにタスク追加を許可します')
+        .addRoleOption(opt =>
+          opt.setName('role').setDescription('対象ロール').setRequired(true)
         )
     )
     .addSubcommand(sub =>
-      sub.setName('remove-user')
-        .setDescription('ユーザーのタスク追加許可を取り消します')
-        .addUserOption(opt =>
-          opt.setName('user').setDescription('対象ユーザー').setRequired(true)
+      sub.setName('remove-role')
+        .setDescription('ロールのタスク追加許可を取り消します')
+        .addRoleOption(opt =>
+          opt.setName('role').setDescription('対象ロール').setRequired(true)
         )
     )
     .addSubcommand(sub =>
-      sub.setName('allowed-users')
-        .setDescription('タスク追加許可ユーザー一覧を表示します')
+      sub.setName('allowed-roles')
+        .setDescription('タスク追加許可ロール一覧を表示します')
     )
     .toJSON(),
 ]
