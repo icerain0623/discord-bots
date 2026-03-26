@@ -11,6 +11,7 @@ const COMMANDS = [
   { name: 'org', desc: '組織図管理' },
   { name: 'relay', desc: '1文リレーイベント' },
   { name: 'celebration-setup', desc: 'お祝い保存設定' },
+  { name: 'task', desc: 'タスク管理' },
 ]
 
 function formatJST(isoString) {
