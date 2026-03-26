@@ -1,5 +1,26 @@
 # Release Notes
 
+## v0.14.0 — タスク管理機能
+
+> 2026-03-27
+
+### 新機能
+
+- `/task add` — タスクを追加（名前・期限・優先度）
+- `/task list` — タスク一覧を表示
+- `/task complete` — タスクを完了にする
+- `/task delete` — タスクを削除する
+- `/task allow-user` — ユーザーにタスク追加を許可
+- `/task remove-user` — 許可を取り消し
+- `/task allowed-users` — 許可ユーザー一覧
+
+### 技術的変更
+
+- `SESSION_KV` を共有利用（`tasks:{guildId}` / `task-config:{guildId}` キープレフィックス、TTLなし）
+- 権限モデル: add はモデレーター（MANAGE_MESSAGES）または許可ユーザー、complete/delete/config はサーバー管理者（MANAGE_GUILD）、list は制限なし
+
+---
+
 ## v0.13.0 — お祝いメッセージ保存機能
 
 > 2026-03-26
