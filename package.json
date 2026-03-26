@@ -9,7 +9,8 @@
     "publish": "wrangler deploy",
     "lint": "eslint src/ tests/",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "collect": "node scripts/collect-emoji-stats.js"
+    "collect": "node scripts/collect-emoji-stats.js",
+    "collect-celebrations": "node scripts/collect-celebrations.js"
   },
   "jest": {
     "transform": {}
