@@ -110,9 +110,35 @@ async function handleList(kv, guildId) {
   return { type: 4, data: { content } }
 }
 
-// Stubs for Task 3 and Task 4
-async function handleComplete() { return ephemeralMsg('未実装') }
-async function handleDelete() { return ephemeralMsg('未実装') }
+async function handleComplete(kv, guildId, options, interaction) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
+  const data = await getTasks(kv, guildId)
+  const task = data.tasks.find(t => t.id === options.id)
+  if (!task) return ephemeralMsg(`タスク #${options.id} が見つかりません。`)
+
+  task.completed = true
+  await saveTasks(kv, guildId, data)
+  return ephemeralMsg(`✅ タスク #${task.id} を完了しました。`)
+}
+
+async function handleDelete(kv, guildId, options, interaction) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
+  const data = await getTasks(kv, guildId)
+  const idx = data.tasks.findIndex(t => t.id === options.id)
+  if (idx === -1) return ephemeralMsg(`タスク #${options.id} が見つかりません。`)
+
+  data.tasks.splice(idx, 1)
+  await saveTasks(kv, guildId, data)
+  return ephemeralMsg(`🗑️ タスク #${options.id} を削除しました。`)
+}
+
+// Stubs for Task 4
 async function handleAllowUser() { return ephemeralMsg('未実装') }
 async function handleRemoveUser() { return ephemeralMsg('未実装') }
 async function handleAllowedUsers() { return ephemeralMsg('未実装') }

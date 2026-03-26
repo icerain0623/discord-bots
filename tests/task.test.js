@@ -118,3 +118,73 @@ describe('task list', () => {
     expect(result.data.content).toContain('完了: 1件')
   })
 })
+
+describe('task complete', () => {
+  test('marks task as completed', async () => {
+    const kv = createMockKV()
+    const data = {
+      tasks: [{ id: 1, name: 'タスク', priority: 'high', deadline: null, createdBy: 'u1', createdAt: '2026-03-27T00:00:00Z', completed: false }],
+      nextId: 2,
+    }
+    await kv.put('tasks:g1', JSON.stringify(data))
+    const env = { SESSION_KV: kv }
+    // MANAGE_GUILD = 1 << 5 = 32
+    const interaction = makeInteraction('complete', { id: 1 }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('完了しました')
+
+    const updated = JSON.parse(await kv.get('tasks:g1'))
+    expect(updated.tasks[0].completed).toBe(true)
+  })
+
+  test('rejects without MANAGE_GUILD', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('complete', { id: 1 }, '0')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('権限')
+  })
+
+  test('returns error for non-existent task', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('complete', { id: 99 }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('見つかりません')
+  })
+})
+
+describe('task delete', () => {
+  test('removes task from array', async () => {
+    const kv = createMockKV()
+    const data = {
+      tasks: [{ id: 1, name: 'タスク', priority: 'high', deadline: null, createdBy: 'u1', createdAt: '2026-03-27T00:00:00Z', completed: false }],
+      nextId: 2,
+    }
+    await kv.put('tasks:g1', JSON.stringify(data))
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('delete', { id: 1 }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('削除しました')
+
+    const updated = JSON.parse(await kv.get('tasks:g1'))
+    expect(updated.tasks).toHaveLength(0)
+    expect(updated.nextId).toBe(2) // nextId stays
+  })
+
+  test('rejects without MANAGE_GUILD', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('delete', { id: 1 }, '0')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('権限')
+  })
+
+  test('returns error for non-existent task', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('delete', { id: 99 }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('見つかりません')
+  })
+})
