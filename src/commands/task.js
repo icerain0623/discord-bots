@@ -138,7 +138,49 @@ async function handleDelete(kv, guildId, options, interaction) {
   return ephemeralMsg(`🗑️ タスク #${options.id} を削除しました。`)
 }
 
-// Stubs for Task 4
-async function handleAllowUser() { return ephemeralMsg('未実装') }
-async function handleRemoveUser() { return ephemeralMsg('未実装') }
-async function handleAllowedUsers() { return ephemeralMsg('未実装') }
+async function handleAllowUser(kv, guildId, options, interaction) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
+  const userId = options.user
+  const config = await getTaskConfig(kv, guildId)
+  if (config.allowedUsers.includes(userId)) {
+    return ephemeralMsg(`<@${userId}> は既に登録されています。`)
+  }
+
+  config.allowedUsers.push(userId)
+  await saveTaskConfig(kv, guildId, config)
+  return ephemeralMsg(`✅ <@${userId}> にタスク追加を許可しました。`)
+}
+
+async function handleRemoveUser(kv, guildId, options, interaction) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
+  const userId = options.user
+  const config = await getTaskConfig(kv, guildId)
+  const idx = config.allowedUsers.indexOf(userId)
+  if (idx === -1) {
+    return ephemeralMsg(`<@${userId}> は登録されていません。`)
+  }
+
+  config.allowedUsers.splice(idx, 1)
+  await saveTaskConfig(kv, guildId, config)
+  return ephemeralMsg(`✅ <@${userId}> の許可を取り消しました。`)
+}
+
+async function handleAllowedUsers(kv, guildId, interaction) {
+  if (!hasManageGuild(interaction)) {
+    return permissionDeniedResponse('サーバーの管理')
+  }
+
+  const config = await getTaskConfig(kv, guildId)
+  if (config.allowedUsers.length === 0) {
+    return ephemeralMsg('許可ユーザーはいません。')
+  }
+
+  const list = config.allowedUsers.map(id => `・<@${id}>`).join('\n')
+  return ephemeralMsg(`📋 タスク追加許可ユーザー\n${list}`)
+}

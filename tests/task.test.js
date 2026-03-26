@@ -188,3 +188,75 @@ describe('task delete', () => {
     expect(result.data.content).toContain('見つかりません')
   })
 })
+
+describe('task allow-user', () => {
+  test('adds user to allowed list', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('許可しました')
+
+    const config = JSON.parse(await kv.get('task-config:g1'))
+    expect(config.allowedUsers).toContain('u-target')
+  })
+
+  test('skips duplicate user', async () => {
+    const kv = createMockKV()
+    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u-target'] }))
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('既に登録されています')
+  })
+
+  test('rejects without MANAGE_GUILD', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '0')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('権限')
+  })
+})
+
+describe('task remove-user', () => {
+  test('removes user from allowed list', async () => {
+    const kv = createMockKV()
+    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u-target'] }))
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('remove-user', { user: 'u-target' }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('取り消しました')
+
+    const config = JSON.parse(await kv.get('task-config:g1'))
+    expect(config.allowedUsers).not.toContain('u-target')
+  })
+
+  test('returns message when user not in list', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('remove-user', { user: 'u-unknown' }, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('登録されていません')
+  })
+})
+
+describe('task allowed-users', () => {
+  test('shows allowed users list', async () => {
+    const kv = createMockKV()
+    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['111', '222'] }))
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('allowed-users', {}, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('<@111>')
+    expect(result.data.content).toContain('<@222>')
+  })
+
+  test('shows empty message when no users', async () => {
+    const kv = createMockKV()
+    const env = { SESSION_KV: kv }
+    const interaction = makeInteraction('allowed-users', {}, '32')
+    const result = await handleTask(interaction, env)
+    expect(result.data.content).toContain('許可ユーザーはいません')
+  })
+})
