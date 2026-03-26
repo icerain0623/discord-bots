@@ -1,5 +1,19 @@
 # Release Notes
 
+## v0.15.0 — タスク権限をロールベースに変更
+
+> 2026-03-27
+
+### 変更
+
+- `/task allow-user` → `/task allow-role` — ロール単位でタスク追加を許可
+- `/task remove-user` → `/task remove-role` — ロールの許可を取り消し
+- `/task allowed-users` → `/task allowed-roles` — 許可ロール一覧を表示
+- 権限チェックをユーザーID判定からロール判定に変更（`interaction.member.roles` を使用）
+- KVデータ構造を `allowedUsers[]` → `allowedRoles[]` に変更（既存データは自動マイグレーション）
+
+---
+
 ## v0.14.0 — タスク管理機能
 
 > 2026-03-27
@@ -10,14 +24,14 @@
 - `/task list` — タスク一覧を表示
 - `/task complete` — タスクを完了にする
 - `/task delete` — タスクを削除する
-- `/task allow-user` — ユーザーにタスク追加を許可
-- `/task remove-user` — 許可を取り消し
-- `/task allowed-users` — 許可ユーザー一覧
+- `/task allow-role` — ロールにタスク追加を許可
+- `/task remove-role` — 許可を取り消し
+- `/task allowed-roles` — 許可ロール一覧
 
 ### 技術的変更
 
 - `SESSION_KV` を共有利用（`tasks:{guildId}` / `task-config:{guildId}` キープレフィックス、TTLなし）
-- 権限モデル: add はモデレーター（MANAGE_MESSAGES）または許可ユーザー、complete/delete/config はサーバー管理者（MANAGE_GUILD）、list は制限なし
+- 権限モデル: add はモデレーター（MANAGE_MESSAGES）または許可ロール、complete/delete/config はサーバー管理者（MANAGE_GUILD）、list は制限なし
 
 ---
 
