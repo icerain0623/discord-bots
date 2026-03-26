@@ -27,14 +27,22 @@ describe('taskStore', () => {
   test('getTaskConfig returns default when empty', async () => {
     const kv = createMockKV()
     const config = await getTaskConfig(kv, 'g1')
-    expect(config).toEqual({ allowedUsers: [] })
+    expect(config).toEqual({ allowedRoles: [] })
   })
 
   test('saveTaskConfig and getTaskConfig round-trip', async () => {
     const kv = createMockKV()
-    const config = { allowedUsers: ['u1', 'u2'] }
+    const config = { allowedRoles: ['r1', 'r2'] }
     await saveTaskConfig(kv, 'g1', config)
     const result = await getTaskConfig(kv, 'g1')
     expect(result).toEqual(config)
+  })
+
+  test('migrates legacy allowedUsers to allowedRoles', async () => {
+    const kv = createMockKV()
+    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u1'] }))
+    const config = await getTaskConfig(kv, 'g1')
+    expect(config).toEqual({ allowedRoles: [] })
+    expect(config.allowedUsers).toBeUndefined()
   })
 })
