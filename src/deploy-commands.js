@@ -251,6 +251,66 @@ const commands = [
     .setName('お祝い保存')
     .setType(ApplicationCommandType.Message)
     .toJSON(),
+  new SlashCommandBuilder()
+    .setName('task')
+    .setDescription('タスク管理')
+    .addSubcommand(sub =>
+      sub.setName('add')
+        .setDescription('タスクを追加します')
+        .addStringOption(opt =>
+          opt.setName('name').setDescription('タスク名').setRequired(true)
+        )
+        .addStringOption(opt =>
+          opt.setName('deadline').setDescription('期限（YYYY-MM-DD）').setRequired(false)
+        )
+        .addStringOption(opt =>
+          opt.setName('priority')
+            .setDescription('優先度')
+            .setRequired(false)
+            .addChoices(
+              { name: '🔴 緊急', value: 'high' },
+              { name: '🟡 通常', value: 'medium' },
+              { name: '🟢 低め', value: 'low' },
+            )
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('list')
+        .setDescription('タスク一覧を表示します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('complete')
+        .setDescription('タスクを完了にします')
+        .addIntegerOption(opt =>
+          opt.setName('id').setDescription('タスクID').setRequired(true).setMinValue(1)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('delete')
+        .setDescription('タスクを削除します')
+        .addIntegerOption(opt =>
+          opt.setName('id').setDescription('タスクID').setRequired(true).setMinValue(1)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('allow-user')
+        .setDescription('ユーザーにタスク追加を許可します')
+        .addUserOption(opt =>
+          opt.setName('user').setDescription('対象ユーザー').setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('remove-user')
+        .setDescription('ユーザーのタスク追加許可を取り消します')
+        .addUserOption(opt =>
+          opt.setName('user').setDescription('対象ユーザー').setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('allowed-users')
+        .setDescription('タスク追加許可ユーザー一覧を表示します')
+    )
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)

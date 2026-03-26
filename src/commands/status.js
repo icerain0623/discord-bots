@@ -1,6 +1,6 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
-const VERSION = '0.13.0'
+const VERSION = '0.14.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
@@ -11,6 +11,7 @@ const COMMANDS = [
   { name: 'org', desc: '組織図管理' },
   { name: 'relay', desc: '1文リレーイベント' },
   { name: 'celebration-setup', desc: 'お祝い保存設定' },
+  { name: 'task', desc: 'タスク管理' },
 ]
 
 function formatJST(isoString) {

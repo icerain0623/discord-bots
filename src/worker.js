@@ -10,6 +10,7 @@ import { handleOrg } from './commands/org.js'
 import { handleRelay } from './commands/relay.js'
 import { handleCelebrationSetup } from './commands/celebrationSetup.js'
 import { handleCelebrationSave } from './commands/celebrationSave.js'
+import { handleTask } from './commands/task.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -98,6 +99,11 @@ export default {
       ) {
         ctx.waitUntil(handleCelebrationSave(interaction, env))
         return Response.json({ type: 5, data: { flags: 64 } })
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'task'
+      ) {
+        result = await handleTask(interaction, env)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {
