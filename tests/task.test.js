@@ -9,13 +9,14 @@ function createMockKV() {
   }
 }
 
-function makeInteraction(sub, options = {}, permissions = '8192') {
+function makeInteraction(sub, options = {}, permissions = '8192', roles = []) {
   // 8192 = MANAGE_MESSAGES (1 << 13)
   const opts = Object.entries(options).map(([name, value]) => ({ name, value }))
   return {
     guild_id: 'g1',
     member: {
       permissions,
+      roles,
       user: { id: 'u1', global_name: 'TestUser' },
     },
     data: {
@@ -62,11 +63,11 @@ describe('task add', () => {
     expect(result.data.content).toContain('権限')
   })
 
-  test('allows add when user is in allowedUsers', async () => {
+  test('allows add when user has allowed role', async () => {
     const kv = createMockKV()
-    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u1'] }))
+    await kv.put('task-config:g1', JSON.stringify({ allowedRoles: ['role1'] }))
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('add', { name: 'タスク' }, '0')
+    const interaction = makeInteraction('add', { name: 'タスク' }, '0', ['role1'])
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('タスクを追加しました')
   })
@@ -189,23 +190,23 @@ describe('task delete', () => {
   })
 })
 
-describe('task allow-user', () => {
-  test('adds user to allowed list', async () => {
+describe('task allow-role', () => {
+  test('adds role to allowed list', async () => {
     const kv = createMockKV()
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '32')
+    const interaction = makeInteraction('allow-role', { role: 'r-target' }, '32')
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('許可しました')
 
     const config = JSON.parse(await kv.get('task-config:g1'))
-    expect(config.allowedUsers).toContain('u-target')
+    expect(config.allowedRoles).toContain('r-target')
   })
 
-  test('skips duplicate user', async () => {
+  test('skips duplicate role', async () => {
     const kv = createMockKV()
-    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u-target'] }))
+    await kv.put('task-config:g1', JSON.stringify({ allowedRoles: ['r-target'] }))
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '32')
+    const interaction = makeInteraction('allow-role', { role: 'r-target' }, '32')
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('既に登録されています')
   })
@@ -213,50 +214,50 @@ describe('task allow-user', () => {
   test('rejects without MANAGE_GUILD', async () => {
     const kv = createMockKV()
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('allow-user', { user: 'u-target' }, '0')
+    const interaction = makeInteraction('allow-role', { role: 'r-target' }, '0')
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('権限')
   })
 })
 
-describe('task remove-user', () => {
-  test('removes user from allowed list', async () => {
+describe('task remove-role', () => {
+  test('removes role from allowed list', async () => {
     const kv = createMockKV()
-    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['u-target'] }))
+    await kv.put('task-config:g1', JSON.stringify({ allowedRoles: ['r-target'] }))
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('remove-user', { user: 'u-target' }, '32')
+    const interaction = makeInteraction('remove-role', { role: 'r-target' }, '32')
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('取り消しました')
 
     const config = JSON.parse(await kv.get('task-config:g1'))
-    expect(config.allowedUsers).not.toContain('u-target')
+    expect(config.allowedRoles).not.toContain('r-target')
   })
 
-  test('returns message when user not in list', async () => {
+  test('returns message when role not in list', async () => {
     const kv = createMockKV()
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('remove-user', { user: 'u-unknown' }, '32')
+    const interaction = makeInteraction('remove-role', { role: 'r-unknown' }, '32')
     const result = await handleTask(interaction, env)
     expect(result.data.content).toContain('登録されていません')
   })
 })
 
-describe('task allowed-users', () => {
-  test('shows allowed users list', async () => {
+describe('task allowed-roles', () => {
+  test('shows allowed roles list', async () => {
     const kv = createMockKV()
-    await kv.put('task-config:g1', JSON.stringify({ allowedUsers: ['111', '222'] }))
+    await kv.put('task-config:g1', JSON.stringify({ allowedRoles: ['111', '222'] }))
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('allowed-users', {}, '32')
+    const interaction = makeInteraction('allowed-roles', {}, '32')
     const result = await handleTask(interaction, env)
-    expect(result.data.content).toContain('<@111>')
-    expect(result.data.content).toContain('<@222>')
+    expect(result.data.content).toContain('<@&111>')
+    expect(result.data.content).toContain('<@&222>')
   })
 
-  test('shows empty message when no users', async () => {
+  test('shows empty message when no roles', async () => {
     const kv = createMockKV()
     const env = { SESSION_KV: kv }
-    const interaction = makeInteraction('allowed-users', {}, '32')
+    const interaction = makeInteraction('allowed-roles', {}, '32')
     const result = await handleTask(interaction, env)
-    expect(result.data.content).toContain('許可ユーザーはいません')
+    expect(result.data.content).toContain('許可ロールはありません')
   })
 })
