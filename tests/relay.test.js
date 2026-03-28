@@ -64,6 +64,22 @@ describe('relay — permission check', () => {
   })
 })
 
+describe('relay help', () => {
+  test('returns ephemeral help text with all commands', async () => {
+    const result = await handleRelay(makeInteraction('help'), { SESSION_KV: createMockKV() })
+    expect(result.type).toBe(4)
+    expect(result.data.flags).toBe(64)
+    expect(result.data.content).toContain('/relay start')
+    expect(result.data.content).toContain('/relay status')
+    expect(result.data.content).toContain('/relay delete')
+    expect(result.data.content).toContain('/relay end')
+    expect(result.data.content).toContain('/relay post')
+    expect(result.data.content).toContain('/relay reveal')
+    expect(result.data.content).toContain('/relay terminate')
+    expect(result.data.content).toContain('基本の流れ')
+  })
+})
+
 describe('relay start', () => {
   test('rejects if relay already active', async () => {
     const kv = createMockKV()
