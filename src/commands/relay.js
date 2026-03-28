@@ -28,6 +28,7 @@ export async function handleRelay(interaction, env, ctx) {
   const guildId = interaction.guild_id
   const { sub, options } = getSubcommand(interaction)
 
+  if (sub === 'help') return handleHelp()
   if (sub === 'start') return handleStart(kv, guildId, options, interaction, env, ctx)
   if (sub === 'status') return handleStatus(kv, guildId)
   if (sub === 'delete') return handleDelete(kv, guildId, options)
@@ -37,6 +38,36 @@ export async function handleRelay(interaction, env, ctx) {
   if (sub === 'terminate') return handleTerminate(kv, guildId, interaction, env, ctx)
 
   return ephemeralMsg('不明なサブコマンドです。')
+}
+
+function handleHelp() {
+  const text = [
+    '**📖 /relay コマンドの使い方**',
+    '',
+    '`/relay start topic:<お題> first_sentence:<最初の一文>`',
+    '　リレーを開始します。パネルが投稿され、参加者がボタンで一文を追加できます。',
+    '',
+    '`/relay status`',
+    '　現在の全文と執筆者を確認します（自分だけに表示）。',
+    '',
+    '`/relay delete number:<番号>`',
+    '　指定した番号の文を削除します。',
+    '',
+    '`/relay end`',
+    '　リレーを終了します。追記ボタンが無効になりますが、データは残ります。',
+    '',
+    '`/relay post channel:<チャンネル>`',
+    '　全文を匿名で指定チャンネルに投稿します。',
+    '',
+    '`/relay reveal channel:<チャンネル>`',
+    '　執筆者一覧（ネタバレ）を指定チャンネルに投稿します。',
+    '',
+    '`/relay terminate`',
+    '　リレーのデータを完全に削除します。',
+    '',
+    '**💡 基本の流れ:** `start` → ボタンで参加 → `end` → `post` → `reveal` → `terminate`',
+  ].join('\n')
+  return ephemeralMsg(text)
 }
 
 async function handleStart(kv, guildId, options, interaction, env, ctx) {

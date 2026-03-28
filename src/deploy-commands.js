@@ -172,6 +172,10 @@ const commands = [
     .setName('relay')
     .setDescription('1文リレーイベント機能')
     .addSubcommand(sub =>
+      sub.setName('help')
+        .setDescription('コマンドの使い方を表示します')
+    )
+    .addSubcommand(sub =>
       sub.setName('start')
         .setDescription('リレーを開始します')
         .addStringOption(opt =>
