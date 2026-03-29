@@ -5,7 +5,7 @@ import { handleModalSubmit } from '../src/interactions/modals.js'
 function createMockKV() {
   const store = new Map()
   return {
-    async get(key) { return store.get(key) ?? null },
+    async get(key, _opts) { return store.get(key) ?? null },
     async put(key, value, _opts) { store.set(key, value) },
     async delete(key) { store.delete(key) },
   }
