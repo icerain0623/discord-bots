@@ -3,7 +3,7 @@ const RELAY_TTL = 30 * 24 * 60 * 60 // 30日
 function relayKey(guildId) { return `relay-active:${guildId}` }
 
 export async function getRelay(kv, guildId) {
-  const raw = await kv.get(relayKey(guildId))
+  const raw = await kv.get(relayKey(guildId), 'text')
   return raw ? JSON.parse(raw) : null
 }
 
