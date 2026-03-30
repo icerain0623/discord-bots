@@ -1,3 +1,5 @@
+export { RelayObject } from './relay/RelayObject.js'
+
 import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
 import { handleEmojiStats } from './commands/emojiStats.js'

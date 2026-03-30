@@ -273,7 +273,7 @@ export async function handleButton(interaction, env) {
     const { buildRelayModal } = await import('../modals/relayModal.js')
     const guildId = interaction.guild_id
 
-    const relay = await getRelay(kv, guildId)
+    const relay = await getRelay(env.RELAY_DO, guildId, kv)
     if (!relay) return ephemeralMsg('リレーは開催されていません。')
 
     const lastSentence = relay.sentences[relay.sentences.length - 1]
