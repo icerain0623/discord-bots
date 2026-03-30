@@ -195,8 +195,7 @@ describe('relay_modal submit', () => {
     mockFetch()
     const doNs = createMockDO()
     // Simulate DO failure by making the stub's fetch throw
-    const origGet = doNs.get.bind(doNs)
-    doNs.get = (id) => {
+    doNs.get = (_id) => {
       return {
         async fetch() { throw new Error('DO failure') }
       }

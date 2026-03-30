@@ -1,5 +1,5 @@
 export class RelayObject {
-  constructor(ctx, env) {
+  constructor(ctx, _env) {
     this.sql = ctx.storage.sql
     this.sql.exec(`CREATE TABLE IF NOT EXISTS relay (
       guild_id TEXT PRIMARY KEY,
