@@ -12,3 +12,11 @@ id = "54654535cc2140d0b9022e4be3cf2b31"
 [[kv_namespaces]]
 binding = "MATCHUP_KV"
 id = "923444696dc4472fb016330b9f82d439"
+
+[[durable_objects.bindings]]
+name = "RELAY_DO"
+class_name = "RelayObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RelayObject"]
