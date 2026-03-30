@@ -194,6 +194,10 @@ const commands = [
         .setDescription('リレーの進行状況を表示します')
     )
     .addSubcommand(sub =>
+      sub.setName('last')
+        .setDescription('最後の一文と執筆者を表示します')
+    )
+    .addSubcommand(sub =>
       sub.setName('delete')
         .setDescription('指定番号の文を削除します')
         .addIntegerOption(opt =>

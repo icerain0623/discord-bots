@@ -130,6 +130,29 @@ describe('relay status', () => {
   })
 })
 
+describe('relay last', () => {
+  test('returns error when no relay active', async () => {
+    const result = await handleRelay(makeInteraction('last'), { SESSION_KV: createMockKV() })
+    expect(result.data.content).toContain('開催されていません')
+  })
+
+  test('returns last sentence and author', async () => {
+    const kv = createMockKV()
+    await kv.put('relay-active:g123', JSON.stringify({
+      topic: 'テスト',
+      sentences: [
+        { text: '一文目', userId: 'u1', displayName: 'Alice' },
+        { text: '二文目', userId: 'u2', displayName: 'Bob' },
+      ],
+    }))
+    const result = await handleRelay(makeInteraction('last'), { SESSION_KV: kv })
+    expect(result.data.content).toContain('二文目')
+    expect(result.data.content).toContain('Bob')
+    expect(result.data.content).toContain('2文目')
+    expect(result.data.content).not.toContain('一文目')
+  })
+})
+
 describe('relay delete', () => {
   test('rejects out-of-range number', async () => {
     const kv = createMockKV()

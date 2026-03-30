@@ -31,6 +31,7 @@ export async function handleRelay(interaction, env, ctx) {
   if (sub === 'help') return handleHelp()
   if (sub === 'start') return handleStart(kv, guildId, options, interaction, env, ctx)
   if (sub === 'status') return handleStatus(kv, guildId)
+  if (sub === 'last') return handleLast(kv, guildId)
   if (sub === 'delete') return handleDelete(kv, guildId, options)
   if (sub === 'end') return handleEnd(kv, guildId, interaction, env, ctx)
   if (sub === 'post') return handlePost(kv, guildId, options, interaction, env, ctx)
@@ -49,6 +50,9 @@ function handleHelp() {
     '',
     '`/relay status`',
     '　現在の全文と執筆者を確認します（自分だけに表示）。',
+    '',
+    '`/relay last`',
+    '　最後の一文と執筆者を確認します（自分だけに表示）。',
     '',
     '`/relay delete number:<番号>`',
     '　指定した番号の文を削除します。',
@@ -141,6 +145,14 @@ async function handleStatus(kv, guildId) {
     content = content.slice(0, MSG_LIMIT - 3) + '…'
   }
   return ephemeralMsg(content)
+}
+
+async function handleLast(kv, guildId) {
+  const relay = await getRelay(kv, guildId)
+  if (!relay) return ephemeralMsg('リレーは開催されていません。')
+
+  const last = relay.sentences[relay.sentences.length - 1]
+  return ephemeralMsg(`**最後の一文（${relay.sentences.length}文目）**\n${last.text} — ${last.displayName}`)
 }
 
 async function handleDelete(kv, guildId, options) {
