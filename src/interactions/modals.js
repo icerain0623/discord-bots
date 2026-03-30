@@ -179,7 +179,7 @@ async function doRelayModalSubmit(env, guildId, sentence, userId, displayName, a
   const { editMessage, sendFollowupMessage } = await import('../utils/discordApi.js')
 
   try {
-    const relay = await getRelay(env.SESSION_KV, guildId)
+    const relay = await getRelay(env.RELAY_DO, guildId, env.SESSION_KV)
     if (!relay) {
       await sendFollowupMessage(applicationId, interactionToken, {
         content: 'リレーは開催されていません。',
@@ -198,7 +198,7 @@ async function doRelayModalSubmit(env, guildId, sentence, userId, displayName, a
     }
 
     relay.sentences.push({ text: sentence, userId, displayName })
-    await saveRelay(env.SESSION_KV, guildId, relay)
+    await saveRelay(env.RELAY_DO, guildId, relay)
 
     const count = relay.sentences.length
 
