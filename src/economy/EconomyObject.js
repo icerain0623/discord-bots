@@ -277,6 +277,11 @@ export class EconomyObject {
       return Response.json({ error: 'Insufficient funds' }, { status: 400 })
     }
 
+    const toRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', toUserId)]
+    if (toRows.length === 0) {
+      return Response.json({ error: '送金先が見つかりません。' }, { status: 404 })
+    }
+
     // Atomic transfer
     this.sql.exec('UPDATE balances SET amount = amount - ? WHERE user_id = ?', amount, fromUserId)
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, toUserId)

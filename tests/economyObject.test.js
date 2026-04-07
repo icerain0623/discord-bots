@@ -327,6 +327,18 @@ describe('EconomyObject', () => {
       const res = await obj.fetch(req('POST', '/bank/send', { fromUserId: 'nobody', toUserId: 'u2', amount: 10 }))
       expect(res.status).toBe(404)
     })
+
+    test('returns 404 if recipient not found', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      const res = await obj.fetch(req('POST', '/bank/send', { fromUserId: 'u1', toUserId: 'nonexistent', amount: 10 }))
+      expect(res.status).toBe(404)
+      const body = await res.json()
+      expect(body.error).toBe('送金先が見つかりません。')
+
+      // Verify sender's balance was not deducted
+      const senderBal = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
+      expect(senderBal.amount).toBe(100)
+    })
   })
 
   // -------------------------------------------------------------------------
