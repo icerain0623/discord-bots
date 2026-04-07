@@ -7,7 +7,7 @@ import { buildReplyModal, buildFollowupModal } from '../modals/contactModal.js'
 import { create, get, remove } from '../utils/kvStore.js'
 import { formatIntro } from '../utils/formatIntro.js'
 import { SESSION_EXPIRED_MSG, getDisplayName, getUserId } from '../utils/interactionHelpers.js'
-import { hasManageMessages, permissionDeniedResponse } from '../utils/permissions.js'
+import { hasManageGuild, hasManageMessages, permissionDeniedResponse } from '../utils/permissions.js'
 
 const EPHEMERAL = 64
 const ephemeralMsg = (content, components) => ({
@@ -283,6 +283,35 @@ export async function handleButton(interaction, env) {
 
     const prevText = lastSentence?.text || '（まだ一文もありません）'
     return showModal(buildRelayModal(prevText))
+  }
+
+  // --- Economy leave approval handlers ---
+  if (customId.startsWith('economy_approve_keep_')) {
+    if (!hasManageGuild(interaction)) return permissionDeniedResponse('サーバーの管理')
+    const targetUserId = customId.replace('economy_approve_keep_', '')
+    const { memberApproveLeave } = await import('../utils/economyStore.js')
+    const { removeMemberRole } = await import('../utils/discordApi.js')
+    await memberApproveLeave(env.ECONOMY_DO, interaction.guild_id, targetUserId, false)
+    await removeMemberRole(interaction.guild_id, targetUserId, env.ECONOMY_ROLE_ID, env.DISCORD_TOKEN)
+    return updateMsg(`✅ <@${targetUserId}> の離脱を承認しました（残高を保持）。`)
+  }
+
+  if (customId.startsWith('economy_approve_confiscate_')) {
+    if (!hasManageGuild(interaction)) return permissionDeniedResponse('サーバーの管理')
+    const targetUserId = customId.replace('economy_approve_confiscate_', '')
+    const { memberApproveLeave } = await import('../utils/economyStore.js')
+    const { removeMemberRole } = await import('../utils/discordApi.js')
+    await memberApproveLeave(env.ECONOMY_DO, interaction.guild_id, targetUserId, true)
+    await removeMemberRole(interaction.guild_id, targetUserId, env.ECONOMY_ROLE_ID, env.DISCORD_TOKEN)
+    return updateMsg(`✅ <@${targetUserId}> の離脱を承認しました（残高を回収）。`)
+  }
+
+  if (customId.startsWith('economy_reject_leave_')) {
+    if (!hasManageGuild(interaction)) return permissionDeniedResponse('サーバーの管理')
+    const targetUserId = customId.replace('economy_reject_leave_', '')
+    const { memberRejectLeave } = await import('../utils/economyStore.js')
+    await memberRejectLeave(env.ECONOMY_DO, interaction.guild_id, targetUserId)
+    return updateMsg(`❌ <@${targetUserId}> の離脱申請を却下しました。`)
   }
 
   return ephemeralMsg('不明なインタラクションです。')
