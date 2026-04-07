@@ -154,8 +154,7 @@ export class EconomyObject {
 
       if (member.active === 1) {
         // Already active
-        const balRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
-        return Response.json({ ok: true, isNew: false, balance: balRows[0]?.amount ?? 0 })
+        return Response.json({ error: '既に参加しています。' })
       }
 
       // Reactivate
@@ -269,7 +268,7 @@ export class EconomyObject {
 
     const fromRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', fromUserId)]
     if (fromRows.length === 0) {
-      return Response.json({ error: 'Sender not found' }, { status: 404 })
+      return Response.json({ error: '送金元が見つかりません。' }, { status: 404 })
     }
 
     const fromBalance = fromRows[0].amount
@@ -287,7 +286,14 @@ export class EconomyObject {
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, toUserId)
     this._recordTransaction(fromUserId, toUserId, amount, 'transfer')
 
-    return Response.json({ ok: true })
+    const newFromRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', fromUserId)]
+    const newToRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', toUserId)]
+
+    return Response.json({
+      ok: true,
+      fromBalance: newFromRows[0]?.amount ?? fromBalance - amount,
+      toBalance: newToRows[0]?.amount ?? toRows[0].amount + amount,
+    })
   }
 
   _handleHistory(userId) {
@@ -325,7 +331,10 @@ export class EconomyObject {
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', DAILY_BONUS, userId)
     this._recordTransaction(null, userId, DAILY_BONUS, 'daily_bonus')
 
-    return Response.json({ ok: true, amount: DAILY_BONUS })
+    const newBalRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
+    const balance = newBalRows[0]?.amount ?? DAILY_BONUS
+
+    return Response.json({ ok: true, balance })
   }
 
   _handleGrant(body) {
@@ -342,7 +351,10 @@ export class EconomyObject {
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, userId)
     this._recordTransaction(adminId ?? 'admin', userId, amount, 'grant')
 
-    return Response.json({ ok: true })
+    const newRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
+    const balance = newRows[0]?.amount ?? rows[0].amount + amount
+
+    return Response.json({ ok: true, balance })
   }
 
   _handleRevoke(body) {
@@ -364,7 +376,10 @@ export class EconomyObject {
       this._recordTransaction(userId, adminId ?? 'admin', deduct, 'revoke')
     }
 
-    return Response.json({ ok: true })
+    const newRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
+    const balance = newRows[0]?.amount ?? current - deduct
+
+    return Response.json({ ok: true, balance })
   }
 
   // -------------------------------------------------------------------------
@@ -436,11 +451,11 @@ export class EconomyObject {
     const newBalance = newBalRows[0]?.amount ?? balance + netChange
 
     return Response.json({
+      ok: true,
       reels: reels.map(r => r.symbol),
-      bet,
       multiplier,
       payout,
-      newBalance,
+      balance: newBalance,
     })
   }
 

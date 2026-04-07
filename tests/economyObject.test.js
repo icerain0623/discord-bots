@@ -176,6 +176,15 @@ describe('EconomyObject', () => {
       expect(body.isNew).toBe(true)
     })
 
+    test('returns error for already-active member', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+
+      const res = await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBe('既に参加しています。')
+    })
+
     test('reactivates an inactive member without re-granting bonus when balance > 0', async () => {
       await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
       await obj.fetch(req('POST', '/members/leave-request', { userId: 'u1' }))
@@ -300,6 +309,8 @@ describe('EconomyObject', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.ok).toBe(true)
+      expect(body.fromBalance).toBe(60)
+      expect(body.toBalance).toBe(140)
 
       const b1 = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
       const b2 = await (await obj.fetch(req('GET', '/bank/balance/u2'))).json()
@@ -388,7 +399,7 @@ describe('EconomyObject', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.ok).toBe(true)
-      expect(body.amount).toBe(50)
+      expect(body.balance).toBe(150)
 
       const bal = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
       expect(bal.amount).toBe(150)
@@ -418,6 +429,7 @@ describe('EconomyObject', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.ok).toBe(true)
+      expect(body.balance).toBe(600)
 
       const bal = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
       expect(bal.amount).toBe(600)
@@ -434,6 +446,9 @@ describe('EconomyObject', () => {
       await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
       const res = await obj.fetch(req('POST', '/bank/revoke', { userId: 'u1', amount: 50, adminId: 'admin' }))
       expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.ok).toBe(true)
+      expect(body.balance).toBe(50)
 
       const bal = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
       expect(bal.amount).toBe(50)
@@ -465,9 +480,12 @@ describe('EconomyObject', () => {
       const res = await obj.fetch(req('POST', '/slot/play', { userId: 'u1', bet: 10 }))
       expect(res.status).toBe(200)
       const body = await res.json()
+      expect(body.ok).toBe(true)
       expect(body.reels).toHaveLength(3)
+      expect(typeof body.multiplier).toBe('number')
       expect(typeof body.payout).toBe('number')
-      expect(typeof body.newBalance).toBe('number')
+      expect(typeof body.balance).toBe('number')
+      expect(body.bet).toBeUndefined()
     })
 
     test('returns 400 if bet below minimum', async () => {
