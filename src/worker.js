@@ -1,4 +1,5 @@
 export { RelayObject } from './relay/RelayObject.js'
+export { EconomyObject } from './economy/EconomyObject.js'
 
 import { verifyDiscordRequest } from './utils/verify.js'
 import { execute as setupIntroExecute } from './commands/setupIntro.js'
@@ -13,6 +14,9 @@ import { handleRelay } from './commands/relay.js'
 import { handleCelebrationSetup } from './commands/celebrationSetup.js'
 import { handleCelebrationSave } from './commands/celebrationSave.js'
 import { handleTask } from './commands/task.js'
+import { handleEconomy } from './commands/economy.js'
+import { handleBank } from './commands/bank.js'
+import { handleSlot } from './commands/slot.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -106,6 +110,21 @@ export default {
         interaction.data?.name === 'task'
       ) {
         result = await handleTask(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'economy'
+      ) {
+        result = await handleEconomy(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'bank'
+      ) {
+        result = await handleBank(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'slot'
+      ) {
+        result = await handleSlot(interaction, env)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {

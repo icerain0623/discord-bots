@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from '@jest/globals'
+import { describe, test, expect } from '@jest/globals'
 import { handleSlot } from '../src/commands/slot.js'
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,7 @@ function createMockDO(fixedResult) {
     idFromName: (_name) => 'mock-id',
     get: (_id) => ({
       async fetch(request) {
-        const body = await request.json()
+        await request.json()
         // Return fixed result for /slot/play, including the bet for validation
         if (request.url.includes('/slot/play')) {
           return Response.json(fixedResult)
