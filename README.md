@@ -15,6 +15,7 @@
 | 組織図自動編成 | Discordロールから組織図を自動構成しEmbed表示 | 🧪 テスト機能 | — |
 | 1文リレー | イベント用1文リレー機能（匿名全文投稿＋ネタバレ） | 🧪 テスト機能 | — |
 | お祝い保存 | メッセージを専用チャンネルにアーカイブ（コンテキストメニュー） | 🧪 テスト機能 | — |
+| 肩書コイン経済 | サーバー内通貨（参加者管理・銀行・スロット） | 🧪 テスト機能 | — |
 
 ---
 
@@ -43,7 +44,10 @@ discord-bots/
 │   │   ├── org.js                 # /org コマンド（組織図管理）
 │   │   ├── relay.js               # /relay コマンド（1文リレー）
 │   │   ├── celebrationSetup.js   # /celebration-setup コマンド
-│   │   └── celebrationSave.js    # お祝い保存コンテキストメニュー
+│   │   ├── celebrationSave.js    # お祝い保存コンテキストメニュー
+│   │   ├── economy.js            # /economy コマンド（肩書コイン参加者管理）
+│   │   ├── bank.js               # /bank コマンド（肩書コイン銀行）
+│   │   └── slot.js               # /slot コマンド（スロットマシン）
 │   ├── interactions/
 │   │   ├── buttons.js             # ボタン操作ハンドラー
 │   │   ├── modals.js              # モーダル送信ハンドラー
@@ -71,7 +75,10 @@ discord-bots/
 │       ├── verify.js              # Discord リクエスト署名検証
 │       ├── orgStore.js            # 組織図 KV データアクセス
 │       ├── orgFormatter.js        # 組織図 Embed 整形ロジック
-│       └── relayStore.js          # 1文リレー KV データアクセス
+│       ├── relayStore.js          # 1文リレー KV データアクセス
+│       └── economyStore.js       # 肩書コイン DO データアクセス
+│   ├── economy/
+│   │   └── EconomyObject.js      # 肩書コイン Durable Object
 ├── docs/                          # 機能別ドキュメント
 ├── scripts/
 │   └── collect-emoji-stats.js     # ローカルバッチ集計スクリプト
@@ -118,6 +125,8 @@ cp .env.example .env
 | `GUILD_ID` | 開発・運用サーバーの ID |
 | `INTRO_CHANNEL_ID` | 自己紹介を投稿するチャンネルの ID |
 | `CONTACT_CHANNEL_ID` | モデレーター用チャンネルの ID |
+| `ECONOMY_ROLE_ID` | 肩書コイン経済の参加者ロール ID |
+| `ECONOMY_ADMIN_CHANNEL_ID` | 肩書コイン管理者通知チャンネルの ID |
 
 ### 3. スラッシュコマンドを登録
 
