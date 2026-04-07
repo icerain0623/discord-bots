@@ -54,9 +54,12 @@ function makeInteraction(sub, options = []) {
 // Tests
 // ---------------------------------------------------------------------------
 
+const activeMemberStub = () => Response.json({ user_id: 'u1', active: 1, leave_requested: 0 })
+
 describe('handleBank - balance', () => {
   test('returns ephemeral balance message', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'GET /bank/balance/u1': () => Response.json({ user_id: 'u1', amount: 1500 }),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -71,6 +74,7 @@ describe('handleBank - balance', () => {
 describe('handleBank - send', () => {
   test('sends coins and returns ephemeral confirmation', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'POST /bank/send': () => Response.json({ ok: true, fromBalance: 70, toBalance: 130 }),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -87,7 +91,8 @@ describe('handleBank - send', () => {
   })
 
   test('returns error if amount is 0 (no DO call)', async () => {
-    const env = { ECONOMY_DO: createMockDO({}) }
+    const stub = makeStub({ 'GET /members/get/u1': activeMemberStub })
+    const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
     const interaction = makeInteraction('send', [
       { name: 'user', value: 'u2' },
       { name: 'amount', value: 0 },
@@ -98,7 +103,8 @@ describe('handleBank - send', () => {
   })
 
   test('returns error if sending to self (no DO call)', async () => {
-    const env = { ECONOMY_DO: createMockDO({}) }
+    const stub = makeStub({ 'GET /members/get/u1': activeMemberStub })
+    const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
     const interaction = makeInteraction('send', [
       { name: 'user', value: 'u1' }, // same as sender
       { name: 'amount', value: 10 },
@@ -110,6 +116,7 @@ describe('handleBank - send', () => {
 
   test('returns store error message', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'POST /bank/send': () => Response.json({ error: '残高が不足しています。' }),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -126,6 +133,7 @@ describe('handleBank - send', () => {
 describe('handleBank - history', () => {
   test('returns ephemeral history message', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'GET /bank/history/u1': () => Response.json([
         { type: 'send', amount: 50, to_user: 'u2', from_user: 'u1', created_at: '2026-04-01T00:00:00Z' },
         { type: 'daily', amount: 50, to_user: 'u1', from_user: null, created_at: '2026-04-02T00:00:00Z' },
@@ -141,6 +149,7 @@ describe('handleBank - history', () => {
 
   test('returns ephemeral message when no history', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'GET /bank/history/u1': () => Response.json([]),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -186,6 +195,7 @@ describe('handleBank - ranking', () => {
 describe('handleBank - daily', () => {
   test('returns ephemeral bonus message', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'POST /bank/daily': () => Response.json({ ok: true, balance: 150 }),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -199,6 +209,7 @@ describe('handleBank - daily', () => {
 
   test('returns error if already claimed', async () => {
     const stub = makeStub({
+      'GET /members/get/u1': activeMemberStub,
       'POST /bank/daily': () => Response.json({ error: 'Already claimed today' }),
     })
     const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
@@ -210,7 +221,8 @@ describe('handleBank - daily', () => {
 
 describe('handleBank - unknown subcommand', () => {
   test('returns ephemeral error for unknown sub', async () => {
-    const env = { ECONOMY_DO: createMockDO({}) }
+    const stub = makeStub({ 'GET /members/get/u1': activeMemberStub })
+    const env = { ECONOMY_DO: createMockDO({ 'id:g1': stub }) }
     const res = await handleBank(makeInteraction('unknown'), env)
     expect(res.data.flags).toBe(64)
     expect(res.data.content).toContain('不明なサブコマンド')

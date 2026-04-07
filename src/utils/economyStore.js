@@ -78,3 +78,8 @@ export async function playSlot(doNs, guildId, userId, bet) {
   const res = await doFetch(doNs, guildId, 'POST', '/slot/play', { userId, bet })
   return res.json()
 }
+
+export async function getMember(doNs, guildId, userId) {
+  const res = await doFetch(doNs, guildId, 'GET', `/members/get/${userId}`)
+  return res.json()
+}

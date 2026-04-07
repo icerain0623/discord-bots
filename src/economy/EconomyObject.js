@@ -92,6 +92,11 @@ export class EconomyObject {
       return this._handleMembersStatus()
     }
 
+    if (method === 'GET' && path.startsWith('/members/get/')) {
+      const userId = path.split('/')[3]
+      return Response.json(this.#getMember(userId))
+    }
+
     // -----------------------------------------------------------------------
     // Bank routes
     // -----------------------------------------------------------------------
@@ -166,7 +171,7 @@ export class EconomyObject {
       if (balance === 0) {
         // Re-grant initial bonus
         this.sql.exec('INSERT OR REPLACE INTO balances (user_id, amount) VALUES (?, ?)', userId, INITIAL_BALANCE)
-        this._recordTransaction(null, userId, INITIAL_BALANCE, 'rejoin_bonus')
+        this._recordTransaction(null, userId, INITIAL_BALANCE, 'join_bonus')
         balance = INITIAL_BALANCE
       }
 
@@ -196,6 +201,8 @@ export class EconomyObject {
       return Response.json({ error: 'Member not found' }, { status: 404 })
     }
 
+    if (rows[0].leave_requested === 1) return Response.json({ error: '離脱申請は既に送信されています。' })
+
     this.sql.exec('UPDATE members SET leave_requested = 1 WHERE user_id = ?', userId)
     return Response.json({ ok: true })
   }
@@ -211,12 +218,14 @@ export class EconomyObject {
       return Response.json({ error: 'Member not found' }, { status: 404 })
     }
 
+    if (!rows[0].leave_requested) return Response.json({ error: '離脱申請が見つかりません。' })
+
     if (confiscate) {
       const balRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
       const balance = balRows[0]?.amount ?? 0
       if (balance > 0) {
         this.sql.exec('INSERT OR REPLACE INTO balances (user_id, amount) VALUES (?, ?)', userId, 0)
-        this._recordTransaction(userId, null, balance, 'confiscation')
+        this._recordTransaction(userId, null, balance, 'leave_confiscate')
       }
     }
 
@@ -234,6 +243,8 @@ export class EconomyObject {
     if (rows.length === 0) {
       return Response.json({ error: 'Member not found' }, { status: 404 })
     }
+
+    if (!rows[0].leave_requested) return Response.json({ error: '離脱申請が見つかりません。' })
 
     this.sql.exec('UPDATE members SET leave_requested = 0 WHERE user_id = ?', userId)
     return Response.json({ ok: true })
@@ -284,7 +295,7 @@ export class EconomyObject {
     // Atomic transfer
     this.sql.exec('UPDATE balances SET amount = amount - ? WHERE user_id = ?', amount, fromUserId)
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, toUserId)
-    this._recordTransaction(fromUserId, toUserId, amount, 'transfer')
+    this._recordTransaction(fromUserId, toUserId, amount, 'send')
 
     const newFromRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', fromUserId)]
     const newToRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', toUserId)]
@@ -329,7 +340,7 @@ export class EconomyObject {
 
     this.sql.exec('INSERT OR REPLACE INTO daily_claims (user_id, last_claimed) VALUES (?, ?)', userId, todayUTC)
     this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', DAILY_BONUS, userId)
-    this._recordTransaction(null, userId, DAILY_BONUS, 'daily_bonus')
+    this._recordTransaction(null, userId, DAILY_BONUS, 'daily')
 
     const newBalRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
     const balance = newBalRows[0]?.amount ?? DAILY_BONUS
@@ -444,7 +455,7 @@ export class EconomyObject {
 
     this._recordTransaction(userId, null, bet, 'slot_bet')
     if (payout > 0) {
-      this._recordTransaction(null, userId, payout, 'slot_payout')
+      this._recordTransaction(null, userId, payout, 'slot_win')
     }
 
     const newBalRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', userId)]
@@ -462,6 +473,11 @@ export class EconomyObject {
   // -------------------------------------------------------------------------
   // Internal helpers
   // -------------------------------------------------------------------------
+
+  #getMember(userId) {
+    const rows = [...this.sql.exec('SELECT * FROM members WHERE user_id = ?', userId)]
+    return rows[0] ?? null
+  }
 
   _recordTransaction(fromUser, toUser, amount, type) {
     const now = new Date().toISOString()

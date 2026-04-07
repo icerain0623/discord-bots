@@ -1,5 +1,5 @@
 import { getUserId } from '../utils/interactionHelpers.js'
-import { playSlot } from '../utils/economyStore.js'
+import { playSlot, getMember } from '../utils/economyStore.js'
 
 const EPHEMERAL = 64
 
@@ -42,6 +42,10 @@ export async function handleSlot(interaction, env) {
   const { sub, options } = getSubcommand(interaction)
 
   if (sub === 'play') {
+    const member = await getMember(doNs, guildId, userId)
+    if (!member || member.active !== 1) {
+      return ephemeralMsg('この機能を使うには `/economy join` で参加してください。')
+    }
     const bet = options.bet
     const result = await playSlot(doNs, guildId, userId, bet)
     if (result.error) return ephemeralMsg(result.error)

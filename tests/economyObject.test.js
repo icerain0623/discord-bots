@@ -202,6 +202,24 @@ describe('EconomyObject', () => {
     })
   })
 
+  describe('GET /members/get/:userId', () => {
+    test('returns member data for existing member', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      const res = await obj.fetch(req('GET', '/members/get/u1'))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.user_id).toBe('u1')
+      expect(body.active).toBe(1)
+    })
+
+    test('returns null for nonexistent member', async () => {
+      const res = await obj.fetch(req('GET', '/members/get/nobody'))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body).toBeNull()
+    })
+  })
+
   describe('POST /members/leave-request', () => {
     test('sets leave_requested flag', async () => {
       await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
@@ -214,6 +232,15 @@ describe('EconomyObject', () => {
     test('returns 404 if member not found', async () => {
       const res = await obj.fetch(req('POST', '/members/leave-request', { userId: 'nobody' }))
       expect(res.status).toBe(404)
+    })
+
+    test('returns error if leave already requested', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/leave-request', { userId: 'u1' }))
+      const res = await obj.fetch(req('POST', '/members/leave-request', { userId: 'u1' }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBe('離脱申請は既に送信されています。')
     })
   })
 
@@ -243,6 +270,14 @@ describe('EconomyObject', () => {
       const res = await obj.fetch(req('POST', '/members/approve-leave', { userId: 'nobody', confiscate: false }))
       expect(res.status).toBe(404)
     })
+
+    test('returns error if leave not requested', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      const res = await obj.fetch(req('POST', '/members/approve-leave', { userId: 'u1', confiscate: false }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBe('離脱申請が見つかりません。')
+    })
   })
 
   describe('POST /members/reject-leave', () => {
@@ -259,6 +294,14 @@ describe('EconomyObject', () => {
     test('returns 404 if member not found', async () => {
       const res = await obj.fetch(req('POST', '/members/reject-leave', { userId: 'nobody' }))
       expect(res.status).toBe(404)
+    })
+
+    test('returns error if leave not requested', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      const res = await obj.fetch(req('POST', '/members/reject-leave', { userId: 'u1' }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBe('離脱申請が見つかりません。')
     })
   })
 

@@ -5,11 +5,18 @@ import { handleSlot } from '../src/commands/slot.js'
 // Mock DO namespace factory
 // ---------------------------------------------------------------------------
 
-function createMockDO(fixedResult) {
+function createMockDO(fixedResult, memberActive = true) {
   return {
     idFromName: (_name) => 'mock-id',
     get: (_id) => ({
       async fetch(request) {
+        if (request.url.includes('/members/get/')) {
+          if (memberActive) {
+            return Response.json({ user_id: 'u1', active: 1, leave_requested: 0 })
+          } else {
+            return Response.json(null)
+          }
+        }
         await request.json()
         // Return fixed result for /slot/play, including the bet for validation
         if (request.url.includes('/slot/play')) {
@@ -106,6 +113,17 @@ describe('handleSlot', () => {
       expect(result.type).toBe(4)
       expect(result.data.flags).toBe(64)
       expect(result.data.content).toContain('残高が不足しています。')
+    })
+
+    test('returns ephemeral join prompt when not a member', async () => {
+      const env = { ECONOMY_DO: createMockDO({}, false) }
+      const interaction = makeInteraction('play', [{ name: 'bet', value: 10 }])
+
+      const result = await handleSlot(interaction, env)
+
+      expect(result.type).toBe(4)
+      expect(result.data.flags).toBe(64)
+      expect(result.data.content).toContain('/economy join')
     })
   })
 
