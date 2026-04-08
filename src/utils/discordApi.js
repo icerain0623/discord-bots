@@ -245,3 +245,23 @@ export async function deleteMessage(channelId, messageId, token) {
   }
   return res
 }
+
+export async function addMemberRole(guildId, userId, roleId, token) {
+  const res = await discordFetch(`/guilds/${guildId}/members/${userId}/roles/${roleId}`, token, {
+    method: 'PUT',
+  })
+  if (!res.ok) {
+    console.error(`addMemberRole failed (${res.status}):`, await res.text())
+  }
+  return res
+}
+
+export async function removeMemberRole(guildId, userId, roleId, token) {
+  const res = await discordFetch(`/guilds/${guildId}/members/${userId}/roles/${roleId}`, token, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    console.error(`removeMemberRole failed (${res.status}):`, await res.text())
+  }
+  return res
+}

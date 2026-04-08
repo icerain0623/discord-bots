@@ -319,6 +319,131 @@ const commands = [
         .setDescription('タスク追加許可ロール一覧を表示します')
     )
     .toJSON(),
+
+  // --- 肩書コイン経済 ---
+  new SlashCommandBuilder()
+    .setName('economy')
+    .setDescription('肩書コイン経済の参加者管理')
+    .addSubcommand(sub =>
+      sub.setName('join')
+        .setDescription('肩書コイン経済に参加します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('leave')
+        .setDescription('肩書コイン経済からの離脱を申請します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('approve-leave')
+        .setDescription('離脱申請を承認します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('対象ユーザー')
+            .setRequired(true)
+        )
+        .addBooleanOption(opt =>
+          opt.setName('confiscate')
+            .setDescription('残高を回収するか（デフォルト: false）')
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('reject-leave')
+        .setDescription('離脱申請を却下します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('対象ユーザー')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('status')
+        .setDescription('参加者一覧と統計を表示します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('grant')
+        .setDescription('ユーザーに肩書コインを付与します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('対象ユーザー')
+            .setRequired(true)
+        )
+        .addIntegerOption(opt =>
+          opt.setName('amount')
+            .setDescription('付与する金額')
+            .setRequired(true)
+            .setMinValue(1)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('revoke')
+        .setDescription('ユーザーから肩書コインを回収します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('対象ユーザー')
+            .setRequired(true)
+        )
+        .addIntegerOption(opt =>
+          opt.setName('amount')
+            .setDescription('回収する金額')
+            .setRequired(true)
+            .setMinValue(1)
+        )
+    )
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('bank')
+    .setDescription('肩書コイン銀行')
+    .addSubcommand(sub =>
+      sub.setName('balance')
+        .setDescription('残高を確認します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('send')
+        .setDescription('他のユーザーに送金します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('送金先ユーザー')
+            .setRequired(true)
+        )
+        .addIntegerOption(opt =>
+          opt.setName('amount')
+            .setDescription('送金額')
+            .setRequired(true)
+            .setMinValue(1)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('history')
+        .setDescription('取引履歴を表示します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('ranking')
+        .setDescription('残高ランキングを表示します')
+    )
+    .addSubcommand(sub =>
+      sub.setName('daily')
+        .setDescription('デイリーボーナスを受け取ります')
+    )
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('slot')
+    .setDescription('スロットマシン')
+    .addSubcommand(sub =>
+      sub.setName('play')
+        .setDescription('スロットを回します')
+        .addIntegerOption(opt =>
+          opt.setName('bet')
+            .setDescription('賭け金（最低10）')
+            .setRequired(true)
+            .setMinValue(10)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('rules')
+        .setDescription('配当表とルールを表示します')
+    )
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)

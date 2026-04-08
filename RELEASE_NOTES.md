@@ -1,5 +1,20 @@
 # Release Notes
 
+## v0.19.0 — 肩書コイン経済システム
+
+> 2026-04-08
+
+### 新機能
+
+- `/economy` — 参加者管理（join, leave, approve-leave, reject-leave, status, grant, revoke）
+- `/bank` — 銀行機能（balance, send, history, ranking, daily）
+- `/slot` — スロットマシン（play, rules）
+- Durable Object `EconomyObject` による通貨残高のアトミック管理
+- 参加者ロール自動付与/剥奪
+- 離脱承認ワークフロー（ボタン付き管理者通知）
+
+---
+
 ## v0.18.0 — リレーデータストアを Durable Objects に移行
 
 > 2026-03-30

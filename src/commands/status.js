@@ -1,6 +1,6 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
-const VERSION = '0.18.0'
+const VERSION = '0.19.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
@@ -12,6 +12,9 @@ const COMMANDS = [
   { name: 'relay', desc: '1文リレーイベント' },
   { name: 'celebration-setup', desc: 'お祝い保存設定' },
   { name: 'task', desc: 'タスク管理' },
+  { name: 'economy', desc: '肩書コイン経済の参加者管理' },
+  { name: 'bank', desc: '肩書コイン銀行' },
+  { name: 'slot', desc: 'スロットマシン' },
 ]
 
 function formatJST(isoString) {

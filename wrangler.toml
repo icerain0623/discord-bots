@@ -20,3 +20,11 @@ class_name = "RelayObject"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RelayObject"]
+
+[[durable_objects.bindings]]
+name = "ECONOMY_DO"
+class_name = "EconomyObject"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["EconomyObject"]
