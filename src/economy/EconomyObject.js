@@ -139,6 +139,19 @@ export class EconomyObject {
       return this._handleSlotPlay(body)
     }
 
+    // -----------------------------------------------------------------------
+    // Janken routes
+    // -----------------------------------------------------------------------
+
+    if (method === 'POST' && path === '/janken/escrow') {
+      const { challengerId, targetId, amount } = body ?? {}
+      return Response.json(this.#jankenEscrow(challengerId, targetId, amount))
+    }
+    if (method === 'POST' && path === '/janken/payout') {
+      const { challengerId, targetId, amount, winnerId } = body ?? {}
+      return Response.json(this.#jankenPayout(challengerId, targetId, amount, winnerId))
+    }
+
     return Response.json({ error: 'Not Found' }, { status: 404 })
   }
 
@@ -485,6 +498,45 @@ export class EconomyObject {
       'INSERT INTO transactions (from_user, to_user, amount, type, created_at) VALUES (?, ?, ?, ?, ?)',
       fromUser, toUser, amount, type, now,
     )
+  }
+
+  // -------------------------------------------------------------------------
+  // Janken private methods
+  // -------------------------------------------------------------------------
+
+  #jankenEscrow(challengerId, targetId, amount) {
+    const challengerRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', challengerId)]
+    if (challengerRows.length === 0 || challengerRows[0].amount < amount) {
+      return { error: 'Insufficient balance for challenger' }
+    }
+
+    const targetRows = [...this.sql.exec('SELECT amount FROM balances WHERE user_id = ?', targetId)]
+    if (targetRows.length === 0 || targetRows[0].amount < amount) {
+      return { error: 'Insufficient balance for target' }
+    }
+
+    this.sql.exec('UPDATE balances SET amount = amount - ? WHERE user_id = ?', amount, challengerId)
+    this.sql.exec('UPDATE balances SET amount = amount - ? WHERE user_id = ?', amount, targetId)
+
+    this._recordTransaction(challengerId, null, amount, 'janken_bet')
+    this._recordTransaction(targetId, null, amount, 'janken_bet')
+
+    return { ok: true }
+  }
+
+  #jankenPayout(challengerId, targetId, amount, winnerId) {
+    if (winnerId === null) {
+      this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, challengerId)
+      this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', amount, targetId)
+      this._recordTransaction(null, challengerId, amount, 'janken_refund')
+      this._recordTransaction(null, targetId, amount, 'janken_refund')
+    } else {
+      const prize = amount * 2
+      this.sql.exec('UPDATE balances SET amount = amount + ? WHERE user_id = ?', prize, winnerId)
+      this._recordTransaction(null, winnerId, prize, 'janken_win')
+    }
+
+    return { ok: true }
   }
 }
 
