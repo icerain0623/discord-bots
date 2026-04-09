@@ -1,3 +1,4 @@
+import { judge, HAND_EMOJI, HAND_LABEL } from '../utils/jankenLogic.js'
 import { buildModal1 } from '../modals/modal1.js'
 import { buildModal2 } from '../modals/modal2.js'
 import { buildModal3 } from '../modals/modal3.js'
@@ -312,6 +313,114 @@ export async function handleButton(interaction, env) {
     const { memberRejectLeave } = await import('../utils/economyStore.js')
     await memberRejectLeave(env.ECONOMY_DO, interaction.guild_id, targetUserId)
     return updateMsg(`❌ <@${targetUserId}> の離脱申請を却下しました。`)
+  }
+
+  // --- Janken handlers ---
+  if (customId.startsWith('janken_accept_')) {
+    const { getSession, updateSession } = await import('../utils/jankenStore.js')
+    const { jankenEscrow } = await import('../utils/economyStore.js')
+    const challengerId = customId.replace('janken_accept_', '')
+    const session = await getSession(kv, interaction.guild_id, challengerId)
+    if (!session) return ephemeralMsg('セッションが切れました。')
+    if (session.status !== 'pending') return ephemeralMsg('このじゃんけんはもう始まっています。')
+    if (userId !== session.targetId) return ephemeralMsg('このじゃんけんの対象ではありません。')
+
+    const escrowResult = await jankenEscrow(env.ECONOMY_DO, interaction.guild_id, session.challengerId, session.targetId, session.bet)
+    if (escrowResult.error) return ephemeralMsg(escrowResult.error)
+
+    session.status = 'selecting'
+    session.messageId = interaction.message?.id
+    session.channelId = interaction.channel_id
+    await updateSession(kv, interaction.guild_id, challengerId, session)
+
+    return {
+      type: 7,
+      data: {
+        content:
+          `🎌 **じゃんけん勝負！**\n` +
+          `<@${session.challengerId}> vs <@${session.targetId}>\n` +
+          `賭け金: **${session.bet.toLocaleString()} 肩書コイン**\n\n` +
+          `両者が手を選んでください`,
+        components: [{
+          type: 1,
+          components: [
+            { type: 2, custom_id: `janken_hand_${challengerId}_rock`, label: '✊ グー', style: 2 },
+            { type: 2, custom_id: `janken_hand_${challengerId}_scissors`, label: '✌️ チョキ', style: 2 },
+            { type: 2, custom_id: `janken_hand_${challengerId}_paper`, label: '✋ パー', style: 2 },
+          ],
+        }],
+      },
+    }
+  }
+
+  if (customId.startsWith('janken_reject_')) {
+    const { getSession, deleteSession } = await import('../utils/jankenStore.js')
+    const challengerId = customId.replace('janken_reject_', '')
+    const session = await getSession(kv, interaction.guild_id, challengerId)
+    if (!session) return ephemeralMsg('セッションが切れました。')
+    if (userId !== session.targetId) return ephemeralMsg('このじゃんけんの対象ではありません。')
+
+    await deleteSession(kv, interaction.guild_id, challengerId)
+    return {
+      type: 7,
+      data: {
+        content: `❌ <@${userId}> がじゃんけんを拒否しました。`,
+        components: [],
+      },
+    }
+  }
+
+  if (customId.startsWith('janken_hand_')) {
+    const { getSession, updateSession, deleteSession } = await import('../utils/jankenStore.js')
+    const { jankenPayout } = await import('../utils/economyStore.js')
+    // custom_id format: janken_hand_<challengerId>_<hand>
+    // where <hand> is rock/scissors/paper (no underscores)
+    const rest = customId.replace('janken_hand_', '')
+    const lastUnderscore = rest.lastIndexOf('_')
+    const challengerId = rest.slice(0, lastUnderscore)
+    const hand = rest.slice(lastUnderscore + 1)
+
+    const session = await getSession(kv, interaction.guild_id, challengerId)
+    if (!session) return ephemeralMsg('セッションが切れました。')
+    if (session.status !== 'selecting') return ephemeralMsg('手を選ぶタイミングではありません。')
+    if (userId !== session.challengerId && userId !== session.targetId) {
+      return ephemeralMsg('このじゃんけんの参加者ではありません。')
+    }
+    if (session.choices[userId]) return ephemeralMsg('既に手を選択しています。')
+
+    session.choices[userId] = hand
+
+    const challengerHand = session.choices[session.challengerId]
+    const targetHand = session.choices[session.targetId]
+
+    if (!challengerHand || !targetHand) {
+      await updateSession(kv, interaction.guild_id, challengerId, session)
+      return ephemeralMsg(`✓ ${HAND_LABEL[hand]} を選択しました。相手の選択を待っています...`)
+    }
+
+    // Both chosen - judge
+    const result = judge(challengerHand, targetHand)
+    let winnerId = null
+    if (result === 'a') winnerId = session.challengerId
+    else if (result === 'b') winnerId = session.targetId
+
+    await jankenPayout(env.ECONOMY_DO, interaction.guild_id, session.challengerId, session.targetId, session.bet, winnerId)
+    await deleteSession(kv, interaction.guild_id, challengerId)
+
+    let content =
+      `🎌 **じゃんけん勝負！**\n` +
+      `<@${session.challengerId}> ${HAND_EMOJI[challengerHand]} vs ${HAND_EMOJI[targetHand]} <@${session.targetId}>\n`
+
+    if (winnerId) {
+      content += `→ <@${winnerId}> の勝利！ **+${session.bet.toLocaleString()} 肩書コイン**`
+    } else {
+      content += `→ 引き分け！賭け金を返却しました`
+    }
+
+    return {
+      type: 7,
+      data: { content, components: [] },
+    }
   }
 
   return ephemeralMsg('不明なインタラクションです。')

@@ -1,5 +1,21 @@
 # Release Notes
 
+## v0.20.0 — じゃんけんPvP機能
+
+> 2026-04-09
+
+### 新機能
+
+- `/janken challenge <user> <bet>` — 他のユーザーにじゃんけんを挑戦
+- 承諾/拒否ボタン付きの挑戦メッセージ
+- 両者による手の選択（ephemeralではなく公開ボタンだが、選択内容は両者揃うまで公開されない）
+- 勝敗に応じた肩書コインの移動（勝者が賭け金×2を受け取る、引き分けなら返却）
+- セッションタイムアウト: 5分（SESSION_KV TTL）
+- 新しい取引タイプ: `janken_bet`, `janken_win`, `janken_refund`
+- EconomyObject に `/janken/escrow` と `/janken/payout` エンドポイントを追加
+
+---
+
 ## v0.19.0 — 肩書コイン経済システム
 
 > 2026-04-08

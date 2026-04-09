@@ -17,6 +17,7 @@ import { handleTask } from './commands/task.js'
 import { handleEconomy } from './commands/economy.js'
 import { handleBank } from './commands/bank.js'
 import { handleSlot } from './commands/slot.js'
+import { handleJanken } from './commands/janken.js'
 import { handleButton } from './interactions/buttons.js'
 import { handleModalSubmit } from './interactions/modals.js'
 
@@ -125,6 +126,11 @@ export default {
         interaction.data?.name === 'slot'
       ) {
         result = await handleSlot(interaction, env)
+      } else if (
+        interaction.type === InteractionType.APPLICATION_COMMAND &&
+        interaction.data?.name === 'janken'
+      ) {
+        result = await handleJanken(interaction, env, ctx)
       } else if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
         result = await handleButton(interaction, env)
       } else if (interaction.type === InteractionType.MODAL_SUBMIT) {

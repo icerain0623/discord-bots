@@ -28,6 +28,9 @@ const TYPE_LABELS = {
   slot_bet: 'スロット賭け',
   slot_win: 'スロット当たり',
   leave_confiscate: '離脱回収',
+  janken_bet: 'じゃんけん賭け',
+  janken_win: 'じゃんけん勝利',
+  janken_refund: 'じゃんけん引き分け',
 }
 
 export async function handleBank(interaction, env) {

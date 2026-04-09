@@ -565,6 +565,97 @@ describe('EconomyObject', () => {
   })
 
   // -------------------------------------------------------------------------
+  // Janken
+  // -------------------------------------------------------------------------
+
+  describe('POST /janken/escrow', () => {
+    test('deducts amount from both users when both have sufficient balance', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/join', { userId: 'u2' }))
+
+      const res = await obj.fetch(req('POST', '/janken/escrow', { challengerId: 'u1', targetId: 'u2', amount: 50 }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.ok).toBe(true)
+
+      const b1 = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
+      const b2 = await (await obj.fetch(req('GET', '/bank/balance/u2'))).json()
+      expect(b1.amount).toBe(50)
+      expect(b2.amount).toBe(50)
+    })
+
+    test('returns error if challenger has insufficient balance', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/join', { userId: 'u2' }))
+
+      const res = await obj.fetch(req('POST', '/janken/escrow', { challengerId: 'u1', targetId: 'u2', amount: 200 }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBeDefined()
+
+      // Balances should be unchanged
+      const b1 = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
+      expect(b1.amount).toBe(100)
+    })
+
+    test('returns error if target has insufficient balance', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/join', { userId: 'u2' }))
+      await obj.fetch(req('POST', '/bank/grant', { userId: 'u1', amount: 900, adminId: 'admin' }))
+      // u1 has 1000, u2 has 100
+
+      const res = await obj.fetch(req('POST', '/janken/escrow', { challengerId: 'u1', targetId: 'u2', amount: 500 }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.error).toBeDefined()
+
+      // Balances should be unchanged
+      const b2 = await (await obj.fetch(req('GET', '/bank/balance/u2'))).json()
+      expect(b2.amount).toBe(100)
+    })
+  })
+
+  describe('POST /janken/payout', () => {
+    test('winner receives amount * 2', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/join', { userId: 'u2' }))
+      // Escrow 50 from each (u1: 50, u2: 50)
+      await obj.fetch(req('POST', '/janken/escrow', { challengerId: 'u1', targetId: 'u2', amount: 50 }))
+
+      const res = await obj.fetch(req('POST', '/janken/payout', {
+        challengerId: 'u1', targetId: 'u2', amount: 50, winnerId: 'u1',
+      }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.ok).toBe(true)
+
+      const b1 = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
+      const b2 = await (await obj.fetch(req('GET', '/bank/balance/u2'))).json()
+      expect(b1.amount).toBe(150) // 50 remaining + (50 * 2) prize
+      expect(b2.amount).toBe(50)  // unchanged after escrow
+    })
+
+    test('draw returns amount to both players', async () => {
+      await obj.fetch(req('POST', '/members/join', { userId: 'u1' }))
+      await obj.fetch(req('POST', '/members/join', { userId: 'u2' }))
+      // Escrow 50 from each (u1: 50, u2: 50)
+      await obj.fetch(req('POST', '/janken/escrow', { challengerId: 'u1', targetId: 'u2', amount: 50 }))
+
+      const res = await obj.fetch(req('POST', '/janken/payout', {
+        challengerId: 'u1', targetId: 'u2', amount: 50, winnerId: null,
+      }))
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.ok).toBe(true)
+
+      const b1 = await (await obj.fetch(req('GET', '/bank/balance/u1'))).json()
+      const b2 = await (await obj.fetch(req('GET', '/bank/balance/u2'))).json()
+      expect(b1.amount).toBe(100) // 50 + 50
+      expect(b2.amount).toBe(100) // 50 + 50
+    })
+  })
+
+  // -------------------------------------------------------------------------
   // Unknown routes
   // -------------------------------------------------------------------------
 

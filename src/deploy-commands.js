@@ -444,6 +444,27 @@ const commands = [
         .setDescription('配当表とルールを表示します')
     )
     .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('janken')
+    .setDescription('じゃんけん勝負')
+    .addSubcommand(sub =>
+      sub.setName('challenge')
+        .setDescription('他のユーザーにじゃんけんを挑戦します')
+        .addUserOption(opt =>
+          opt.setName('user')
+            .setDescription('挑戦相手')
+            .setRequired(true)
+        )
+        .addIntegerOption(opt =>
+          opt.setName('bet')
+            .setDescription('賭け金（最低10、最大5000）')
+            .setRequired(true)
+            .setMinValue(10)
+            .setMaxValue(5000)
+        )
+    )
+    .toJSON(),
 ]
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN)
