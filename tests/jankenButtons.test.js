@@ -1,6 +1,6 @@
 import { handleButton } from '../src/interactions/buttons.js'
 
-function createMockDO(store = {}) {
+function createMockDO(_store = {}) {
   return {
     idFromName(name) { return `id:${name}` },
     get(_id) {

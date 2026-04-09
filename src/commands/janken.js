@@ -1,4 +1,4 @@
-import { getUserId, getDisplayName } from '../utils/interactionHelpers.js'
+import { getUserId } from '../utils/interactionHelpers.js'
 import { getMember, getBalance } from '../utils/economyStore.js'
 import { createSession, getSession } from '../utils/jankenStore.js'
 
@@ -77,7 +77,7 @@ export async function handleJanken(interaction, env, ctx) {
   return { type: 5, data: {} }
 }
 
-async function startChallenge(kv, guildId, challengerId, targetId, bet, interaction, env) {
+async function startChallenge(kv, guildId, challengerId, targetId, bet, interaction, _env) {
   const { sendFollowupMessage } = await import('../utils/discordApi.js')
   const applicationId = interaction.application_id
   const interactionToken = interaction.token
@@ -107,7 +107,9 @@ async function startChallenge(kv, guildId, challengerId, targetId, bet, interact
       const msg = await res.json()
       messageId = msg.id
       channelId = msg.channel_id ?? channelId
-    } catch (_e) {}
+    } catch {
+      // sendFollowupMessage may not return a parseable body
+    }
   }
 
   // Save session
