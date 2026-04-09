@@ -1,6 +1,6 @@
 import { hasManageGuild, permissionDeniedResponse } from '../utils/permissions.js'
 
-const VERSION = '0.19.0'
+const VERSION = '0.20.0'
 
 const COMMANDS = [
   { name: 'setup-intro', desc: '自己紹介パネル設置' },
@@ -15,6 +15,7 @@ const COMMANDS = [
   { name: 'economy', desc: '肩書コイン経済の参加者管理' },
   { name: 'bank', desc: '肩書コイン銀行' },
   { name: 'slot', desc: 'スロットマシン' },
+  { name: 'janken', desc: 'じゃんけん勝負（PvP）' },
 ]
 
 function formatJST(isoString) {
