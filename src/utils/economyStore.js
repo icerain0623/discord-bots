@@ -83,3 +83,14 @@ export async function getMember(doNs, guildId, userId) {
   const res = await doFetch(doNs, guildId, 'GET', `/members/get/${userId}`)
   return res.json()
 }
+
+// --- Janken ---
+export async function jankenEscrow(doNs, guildId, challengerId, targetId, amount) {
+  const res = await doFetch(doNs, guildId, 'POST', '/janken/escrow', { challengerId, targetId, amount })
+  return res.json()
+}
+
+export async function jankenPayout(doNs, guildId, challengerId, targetId, amount, winnerId) {
+  const res = await doFetch(doNs, guildId, 'POST', '/janken/payout', { challengerId, targetId, amount, winnerId })
+  return res.json()
+}
